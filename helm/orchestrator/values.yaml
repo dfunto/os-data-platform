@@ -1,0 +1,38 @@
+global:
+  postgresqlSecretName: dagster-postgresql-secret
+
+postgresql:
+  enabled: true
+  auth:
+    username: dagster
+    password: dagster
+    database: dagster
+
+dagster-user-deployments:
+  enabled: true
+  enableSubchart: true
+  deployments:
+    - name: orchestrator
+      image:
+        repository: dadutra2/os-data-platform-orchestrator
+        tag: latest
+        pullPolicy: Always
+      dagsterApiGrpcArgs:
+        - "--python-file"
+        - "src/definitions.py"
+      port: 3030
+      envSecrets:
+        - name: dagster-postgresql-secret
+
+dagsterWebserver:
+  replicaCount: 1
+
+dagsterDaemon:
+  enabled: true
+
+ingress:
+  enabled: false
+
+dagsterHome: |
+  telemetry:
+    enabled: false
