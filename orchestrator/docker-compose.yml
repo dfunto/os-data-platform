@@ -1,3 +1,8 @@
+x-dagster-image: &dagster_image
+  build: .
+  image: dadutra2/os-data-platform-orchestrator:latest
+  env_file: .env
+
 services:
   postgres:
     image: postgres:15
@@ -12,10 +17,9 @@ services:
       retries: 5
 
   user_code:
-    build: .
+    <<: *dagster_image
     command: dagster code-server start -h 0.0.0.0 -p 3030 -f src/definitions.py
     container_name: dagster-user-code
-    env_file: .env
     volumes:
       - ./src:/orchestrator/src  # hot reload during development
     depends_on:
@@ -23,12 +27,11 @@ services:
         condition: service_healthy
 
   webserver:
-    build: .
+    <<: *dagster_image
     container_name: dagster-webserver
     command: dagster-webserver -h 0.0.0.0 -p 3000 -w /dagster/workspace.yaml
     ports:
       - "3000:3000"
-    env_file: .env
     volumes:
       - ./dagster.yaml:/dagster/dagster.yaml
       - ./workspace.yaml:/dagster/workspace.yaml
@@ -39,10 +42,9 @@ services:
         condition: service_started
 
   daemon:
-    build: .
+    <<: *dagster_image
     container_name: dagster-daemon
     command: dagster-daemon run -w /dagster/workspace.yaml
-    env_file: .env
     volumes:
       - ./dagster.yaml:/dagster/dagster.yaml
       - ./workspace.yaml:/dagster/workspace.yaml

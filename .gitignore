@@ -1,6 +1,9 @@
 # Local data volumes
 orchestrator/data/
 
+# Claude
+.claude
+
 # JetBrains
 .idea
 
