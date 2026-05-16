@@ -1,15 +1,15 @@
 # Open Source Data Platform
 
-Just playing around
+Open source data platform built on Kubernetes.
 
 # Tech Stack
 
 - Kubernetes
+- Dagster for Orchestration
 - S3 storage
 - Apache Hudi
 - Airbyte? 
-- Spark on Kubernetes
-- Dagster for Orchestration 
+- Spark on Kubernetes 
 - Trino
 - Clickhouse
 - Kafka
@@ -19,3 +19,10 @@ Just playing around
 
 - Dagster setup
 - CDC Ingestion 
+
+
+# Source ingestion
+
+Files
+RDBMS
+REST API

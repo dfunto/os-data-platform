@@ -1,0 +1,33 @@
+global:
+  edition: community
+  database:
+    type: "external"
+    host: "metadata-postgresql"
+    port: "5432"
+    database: "airbyte"
+    user: "platform"
+    secretName: "metadata-db-postgresql-secret"
+    passwordSecretKey: "postgres-password"
+
+postgresql:
+  enabled: false
+minio:
+  enabled: false
+connector-builder-server:
+  enabled: false
+cron:
+  enabled: false
+
+server:
+  replicaCount: 1
+
+worker:
+  replicaCount: 1
+
+temporal:
+  replicaCount: 1
+
+webapp:
+  enabled: true
+  replicaCount: 1
+

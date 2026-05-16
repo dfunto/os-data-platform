@@ -1,0 +1,20 @@
+auth:
+  username: platform
+  database: platform
+  existingSecret: "metadata-db-postgresql-secret"
+  secretKeys:
+    adminPasswordKey: "admin-password"
+    userPasswordKey: "platform-password"
+
+primary:
+  initdb:
+    scripts:
+      init.sql: |
+        CREATE DATABASE dagster;
+        GRANT ALL PRIVILEGES ON DATABASE dagster TO platform;
+        CREATE DATABASE airbyte;
+        GRANT ALL PRIVILEGES ON DATABASE airbyte TO platform;
+
+persistence:
+  enabled: true
+  size: 8Gi
