@@ -20,8 +20,8 @@ kubectl config set-context --current --namespace=os-data-platform
 
 Define credentials
 ```shell
-export OS_DATA_PLATFORM_METADATA_DB_ADMIN_PASSWORD=admin
-export OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=platform
+export OS_DATA_PLATFORM_METADATA_DB_ADMIN_PASSWORD=<add_admin_password_here>
+export OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=<add_platform_user_password_here>
 ```
 
 Create Kubernetes secret with them
