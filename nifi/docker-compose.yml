@@ -1,0 +1,55 @@
+x-dagster-image: &dagster_image
+  build: .
+  image: dadutra2/os-data-platform-orchestrator:latest
+  env_file: .env
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: dagster-postgres
+    env_file: .env
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dagster"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user_code:
+    <<: *dagster_image
+    command: dagster code-server start -h 0.0.0.0 -p 3030 -f src/definitions.py
+    container_name: dagster-user-code
+    volumes:
+      - ./src:/orchestrator/src  # hot reload during development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  webserver:
+    <<: *dagster_image
+    container_name: dagster-webserver
+    command: dagster-webserver -h 0.0.0.0 -p 3000 -w /dagster/workspace.yaml
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dagster.yaml:/dagster/dagster.yaml
+      - ./workspace.yaml:/dagster/workspace.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user_code:
+        condition: service_started
+
+  daemon:
+    <<: *dagster_image
+    container_name: dagster-daemon
+    command: dagster-daemon run -w /dagster/workspace.yaml
+    volumes:
+      - ./dagster.yaml:/dagster/dagster.yaml
+      - ./workspace.yaml:/dagster/workspace.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user_code:
+        condition: service_started
