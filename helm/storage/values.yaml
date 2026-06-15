@@ -11,8 +11,10 @@ mode:
 secret:
   existingSecret: "storage-rustfs-secret"  # keys: root-user, root-password
 
-dataPersistence:
-  size: 20Gi
+storageclass:
+  name: "standard"
+  dataStorageSize: 20Gi
+  logStorageSize: 1Gi
 
 buckets:
   - name: os-data-platform-ingestor

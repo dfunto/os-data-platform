@@ -1,13 +1,11 @@
 global:
-  postgresqlSecretName: metadata-db-postgresql-secret
-  postgresql:
-    postgresqlHost: "metadata-postgresql"
-    postgresqlPort: 5432
-    postgresqlDatabase: "dagster"
-    postgresqlUsername: "platform"
+  postgresqlSecretName: orchestrator-postgresql-secret
 
 postgresql:
   enabled: false
+  postgresqlHost: "metadata-postgresql"
+  postgresqlUsername: "platform"
+  postgresqlDatabase: "dagster"
 
 ingress:
   enabled: false

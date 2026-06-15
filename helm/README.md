@@ -2,10 +2,14 @@
 
 ## Add repos
 
+> **Important!**  
+> In Jun.2026 Airbyte v2 helm chart was not yet released, for this reason the github repo was referenced directly
+> V2 chart was necessary to disable minio given that we're using RustFS
+
 ```shell
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add dagster https://dagster-io.github.io/helm
-helm repo add airbyte https://airbytehq.github.io/helm-charts
+helm repo add airbyte-v2 "git+https://github.com/airbytehq/airbyte-platform@charts/v2?ref=v2.0.0"
 helm repo add rustfs https://charts.rustfs.com
 helm repo update
 ```
@@ -37,24 +41,21 @@ kubectl annotate secret metadata-db-postgresql-secret \
   meta.helm.sh/release-namespace=os-data-platform \
   --overwrite
 
-kubectl label secret metadata-db-postgresql-secret \
-    app.kubernetes.io/managed-by-
-
-# Orchestrator (Dagster)
-kubectl create secret generic orchestrator-postgresql-secret \
-    --from-literal=postgresql-password=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
-    
-# Ingestor (Airbyte)
-kubectl create secret generic ingestor-postgresql-secret \
-    --from-literal=platform-password=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
+kubectl label secret metadata-db-postgresql-secret app.kubernetes.io/managed-by-
 
 # Storage (RustFS)
-export OS_DATA_PLATFORM_STORAGE_ACCESS_KEY=<access_key>
-export OS_DATA_PLATFORM_STORAGE_SECRET_KEY=<secret_key>
-
 kubectl create secret generic storage-rustfs-secret \
-    --from-literal=root-user=$OS_DATA_PLATFORM_STORAGE_ACCESS_KEY \
-    --from-literal=root-password=$OS_DATA_PLATFORM_STORAGE_SECRET_KEY
+    --from-literal=root-user=admin \
+    --from-literal=root-password=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
+
+# Orchestrator (Dagster)
+kubectl create secret generic orchestrator-postgresql-secret --from-literal=postgresql-password=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
+
+# Ingestor (Airbyte)
+kubectl create secret generic ingestor-postgresql-secret \
+    --from-literal=DATABASE_USER=platform \
+    --from-literal=DATABASE_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
+
 ```
 
 ## Deploy services

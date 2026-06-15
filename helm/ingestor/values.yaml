@@ -1,20 +1,37 @@
 global:
   edition: community
+  auth:
+    instanceAdmin:
+      email: "admin@airbyte.io"
+      password: "admin"
+  image:
+    tag: "2.0.0"
   database:
-    type: "external"
     host: "metadata-postgresql"
     port: "5432"
-    database: "airbyte"
-    user: "platform"
-    secretName: "metadata-db-postgresql-secret"
-    passwordSecretKey: "postgres-password"
+    name: "airbyte"
+    secretName: "ingestor-postgresql-secret"
+  storage:
+    type: minio
+    secretName: storage-rustfs-secret
+    bucket:
+      log: os-data-platform-ingestor
+      state: os-data-platform-ingestor
+      workloadOutput: os-data-platform-ingestor
+    minio:
+      endpoint: "http://storage-rustfs-svc.os-data-platform.svc.cluster.local:9000"
+      accessKeyIdSecretKey: "root-user"
+      secretAccessKeySecretKey: "root-password"
 
 postgresql:
   enabled: false
+
 minio:
   enabled: false
+
 connector-builder-server:
   enabled: false
+
 cron:
   enabled: false
 
@@ -24,10 +41,9 @@ server:
 worker:
   replicaCount: 1
 
-temporal:
-  replicaCount: 1
-
 webapp:
   enabled: true
   replicaCount: 1
-
+  image:
+    repository: airbyte/webapp
+    tag: 1.7.8
