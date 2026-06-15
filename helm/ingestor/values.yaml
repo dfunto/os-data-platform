@@ -40,10 +40,3 @@ server:
 
 worker:
   replicaCount: 1
-
-webapp:
-  enabled: true
-  replicaCount: 1
-  image:
-    repository: airbyte/webapp
-    tag: 1.7.8
