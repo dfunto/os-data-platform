@@ -1,0 +1,15 @@
+[project]
+name = "ingestor"
+version = "0.1.0"
+description = "Data Platform ingestor"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.0.0,<4.0.0",
+    "pulumi-airbyte>=1.0.0,<2.0.0",
+    "common",
+]
+
+[tool.uv.sources]
+pulumi-airbyte = { path = "sdks/airbyte" }
+common = { path = "../libs" }

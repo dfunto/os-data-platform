@@ -1,0 +1,8 @@
+ingestion:
+  - name: cultural
+    source:
+      type: s3
+      bucket: naturalearth
+      prefix: 10m_cultural/
+    triggers:
+      schedule: "0 10 * * *"
