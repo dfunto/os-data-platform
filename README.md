@@ -8,8 +8,8 @@ Open source data platform built on Kubernetes.
 - Dagster for Orchestration
 - S3 storage
 - Apache Hudi
-- Airbyte? 
-- Spark on Kubernetes 
+- Airbyte?
+- Spark on Kubernetes
 - Trino
 - Clickhouse
 - Kafka

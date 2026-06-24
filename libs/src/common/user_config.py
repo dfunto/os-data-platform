@@ -10,7 +10,7 @@ from common.models import IngestionConfig, CapabilityConfig
 T = TypeVar("T", bound=CapabilityConfig)
 
 
-class Config:
+class UserConfig:
 
     def __init__(self, config_dir: str):
         self.config_dir = Path(config_dir)
@@ -26,14 +26,13 @@ class Config:
         capability: str = config_class.capability_name
         for file in self.config_dir.rglob(f"{capability}/*.y*ml"):
             data = yaml.safe_load(file.read_text())
-            if not data or capability not in data:
+            if not data:
                 continue
 
-            config.extend([
+            config.append(
                 config_class(**{
                     "file_path": file,
-                    **entry
+                    **data
                 })
-                for entry in data[capability]
-            ])
+            )
         return config

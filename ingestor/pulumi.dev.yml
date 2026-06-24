@@ -1,7 +1,7 @@
 encryptionsalt: v1:FI8Qo7irZYQ=:v1:G4UDqkTOtYUkUhS4:R0MTiTpWlYi6qT9/XGsfSvVoSn9oTw==
 config:
+  ingestor:workspaceId: "6c579c9f-d78a-4ff0-b80a-b20a3eec5db8"
   airbyte:serverUrl: "http://localhost:8001/api/public/v1/"
-  ingestor:workspaceId: "0acf915b-e9db-4f5c-9eae-e1b512e1849c"
   airbyte:username: admin@airbyte.io
   airbyte:password:
     secure: v1:+1tZO2At73f9Q1b3:EpQ0y0b4d2ktvUTbIjOmrgRdv8+r

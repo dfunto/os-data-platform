@@ -1,23 +1,22 @@
 import pytest
 
 from pathlib import Path
-from common.config import Config
+from common.user_config import UserConfig
 
 
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
+FIXTURES_DIR = str(Path(__file__).parent / "fixtures")
 
 
 class TestConfig:
 
     @pytest.fixture
     def config(self):
-        return Config(config_dir=FIXTURES_DIR)
+        return UserConfig(config_dir=FIXTURES_DIR)
 
-    def test_loads_ingestion_configs(self, config: Config):
+    def test_loads_ingestion_configs(self, config: UserConfig):
         assert len(config.ingestion) == 1
-        print(config.ingestion)
 
     def test_empty_config_dir(self, tmp_path: Path):
         (tmp_path / "ingestion").mkdir()
-        config = Config(config_dir=tmp_path)
+        config = UserConfig(config_dir=str(tmp_path))
         assert config.ingestion == []
