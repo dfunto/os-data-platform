@@ -11,17 +11,19 @@ global:
     port: "5432"
     name: "airbyte"
     secretName: "ingestor-postgresql-secret"
+    userSecretKey: "DATABASE_USER"
+    passwordSecretKey: "DATABASE_PASSWORD"
   storage:
     type: minio
-    secretName: storage-rustfs-secret
+    secretName: storage-seaweedfs-secret
     bucket:
       log: os-data-platform-ingestor
       state: os-data-platform-ingestor
       workloadOutput: os-data-platform-ingestor
     minio:
-      endpoint: "http://storage-rustfs-svc.os-data-platform.svc.cluster.local:9000"
-      accessKeyIdSecretKey: "RUSTFS_ROOT_USER"
-      secretAccessKeySecretKey: "RUSTFS_ROOT_PASSWORD"
+      endpoint: "http://storage-seaweedfs-s3.os-data-platform.svc.cluster.local:8333"
+      accessKeyIdSecretKey: "SEAWEEDFS_S3_ACCESS_KEY_ID"
+      secretAccessKeySecretKey: "SEAWEEDFS_S3_SECRET_ACCESS_KEY"
 
 postgresql:
   enabled: false

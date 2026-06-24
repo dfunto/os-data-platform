@@ -1,6 +1,6 @@
 dependencies:
-- name: rustfs
-  repository: https://charts.rustfs.com
-  version: 0.7.0
-digest: sha256:16ea2374ffa4a8fcf36b483892cba1bb5d3419e47804a2e64085d0644db8db5f
-generated: "2026-06-24T09:10:47.290375+02:00"
+- name: seaweedfs
+  repository: https://seaweedfs.github.io/seaweedfs/helm
+  version: 4.35.0
+digest: sha256:7201d32c4b7bb01c44789061b1e70bdaf98cd17b90957cbe20d9e0655fcfa4b1
+generated: "2026-06-24T12:59:46.378963+02:00"

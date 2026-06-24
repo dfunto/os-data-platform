@@ -1,28 +1,22 @@
-# Bucket init job config
-buckets:
-  - name: os-data-platform-ingestor
+seaweedfs:
+  master:
+    enabled: true
+    replicas: 1
 
-# RustFS subchart values
-rustfs:
-  mode:
-    standalone:
-      enabled: true
-    distributed:
-      enabled: false
-  secret:
-    existingSecret: "storage-rustfs-secret"
-  storageclass:
-    name: "standard"
-    dataStorageSize: 20Gi
-    logStorageSize: 1Gi
-  ingress:
-    enabled: false
-  consoleIngress:
-    enabled: false
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+  volume:
+    enabled: true
+    replicas: 1
+
+  filer:
+    enabled: true
+    replicas: 1
+
+  s3:
+    enabled: true
+    replicas: 1
+    port: 8333
+    enableAuth: true
+    existingConfigSecret: storage-seaweedfs-secret
+    createBuckets:
+      - name: os-data-platform-ingestor
+        anonymousRead: false
