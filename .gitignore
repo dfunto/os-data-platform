@@ -5,7 +5,7 @@ ingestor/sdks
 orchestrator/data/
 
 # Local Helm charts
-helm/charts/
+helm/**/charts/
 
 # Claude
 .claude

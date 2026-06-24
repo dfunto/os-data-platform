@@ -45,8 +45,8 @@ kubectl label secret metadata-db-postgresql-secret app.kubernetes.io/managed-by-
 
 # Storage (RustFS)
 kubectl create secret generic storage-rustfs-secret \
-    --from-literal=root-user=admin \
-    --from-literal=root-password=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
+    --from-literal=RUSTFS_ROOT_USER=admin \
+    --from-literal=RUSTFS_ROOT_PASSWORD=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
 
 # Orchestrator (Dagster)
 kubectl create secret generic orchestrator-postgresql-secret --from-literal=postgresql-password=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
@@ -63,9 +63,11 @@ kubectl create secret generic ingestor-postgresql-secret \
 Order matters
 ```shell
 helm install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data-platform
+helm dependency update helm/storage
+helm install storage ./helm/storage -n os-data-platform
 helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
 helm install ingestor airbyte/airbyte --version 1.7.8 -f helm/ingestor/values.yaml -n os-data-platform
-helm install storage rustfs/rustfs -f helm/storage/values.yaml -n os-data-platform
+
 ```
 
 ## Accessing UI

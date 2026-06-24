@@ -1,0 +1,9 @@
+apiVersion: v2
+name: storage
+description: RustFS object storage with bucket initialization
+type: application
+version: 0.1.0
+dependencies:
+  - name: rustfs
+    version: "0.7.0"
+    repository: "https://charts.rustfs.com"

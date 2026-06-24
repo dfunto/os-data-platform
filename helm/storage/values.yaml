@@ -1,34 +1,28 @@
-# RustFS standalone S3-compatible object storage
-# Chart: rustfs/rustfs v0.7.0 (app: 1.0.0-beta.7)
-# Docs: https://charts.rustfs.com
-
-mode:
-  standalone:
-    enabled: true
-  distributed:
-    enabled: false
-
-secret:
-  existingSecret: "storage-rustfs-secret"  # keys: root-user, root-password
-
-storageclass:
-  name: "standard"
-  dataStorageSize: 20Gi
-  logStorageSize: 1Gi
-
+# Bucket init job config
 buckets:
   - name: os-data-platform-ingestor
 
-ingress:
-  enabled: false
-
-consoleIngress:
-  enabled: false
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+# RustFS subchart values
+rustfs:
+  mode:
+    standalone:
+      enabled: true
+    distributed:
+      enabled: false
+  secret:
+    existingSecret: "storage-rustfs-secret"
+  storageclass:
+    name: "standard"
+    dataStorageSize: 20Gi
+    logStorageSize: 1Gi
+  ingress:
+    enabled: false
+  consoleIngress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

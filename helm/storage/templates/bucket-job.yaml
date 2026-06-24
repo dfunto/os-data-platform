@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: storage-rustfs-bucket-init
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-rustfs
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              until wget -q -O /dev/null http://storage-rustfs-svc.{{ .Release.Namespace }}.svc.cluster.local:9000/health; do
+                echo "waiting for rustfs..."; sleep 2
+              done
+      containers:
+        - name: aws-cli
+          image: amazon/aws-cli:latest
+          command:
+            - sh
+            - -c
+            - |
+              for bucket in ${BUCKETS}; do
+                output=$(aws s3api create-bucket --bucket ${bucket} --endpoint-url ${ENDPOINT} 2>&1)
+                rc=$?
+                if [ $rc -ne 0 ] && ! echo "$output" | grep -q "BucketAlreadyOwnedByYou"; then
+                  echo "ERROR creating bucket ${bucket}: $output"
+                  exit 1
+                fi
+                echo "bucket ${bucket} ready"
+              done
+          env:
+            - name: ENDPOINT
+              value: "http://storage-rustfs-svc.{{ .Release.Namespace }}.svc.cluster.local:9000"
+            {{- $names := list }}
+            {{- range .Values.buckets }}{{- $names = append $names .name }}{{- end }}
+            - name: BUCKETS
+              value: {{ join " " $names | quote }}
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.rustfs.secret.existingSecret }}
+                  key: RUSTFS_ROOT_USER
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.rustfs.secret.existingSecret }}
+                  key: RUSTFS_ROOT_PASSWORD

@@ -20,8 +20,8 @@ global:
       workloadOutput: os-data-platform-ingestor
     minio:
       endpoint: "http://storage-rustfs-svc.os-data-platform.svc.cluster.local:9000"
-      accessKeyIdSecretKey: "root-user"
-      secretAccessKeySecretKey: "root-password"
+      accessKeyIdSecretKey: "RUSTFS_ROOT_USER"
+      secretAccessKeySecretKey: "RUSTFS_ROOT_PASSWORD"
 
 postgresql:
   enabled: false
