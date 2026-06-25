@@ -9,6 +9,7 @@ dependencies = [
     "dagster",
     "dagster-postgres",
     "dagster-k8s",
+    "dagster-aws",
     "dagster-webserver",
 ]
 
