@@ -1,5 +1,8 @@
 x-dagster-image: &dagster_image
-  build: .
+  build:
+    context: .
+    additional_contexts:
+      - libs=../libs
   image: dadutra2/os-data-platform-orchestrator:latest
   env_file: .env
 
@@ -22,6 +25,7 @@ services:
     container_name: dagster-user-code
     volumes:
       - ./src:/orchestrator/src  # hot reload during development
+      - ../configuration:/orchestrator/configuration
     depends_on:
       postgres:
         condition: service_healthy

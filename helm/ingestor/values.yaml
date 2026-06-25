@@ -20,6 +20,8 @@ global:
       log: os-data-platform-ingestor
       state: os-data-platform-ingestor
       workloadOutput: os-data-platform-ingestor
+      auditLogging: os-data-platform-ingestor
+      activityPayload: os-data-platform-ingestor
     minio:
       endpoint: "http://storage-seaweedfs-s3.os-data-platform.svc.cluster.local:8333"
       accessKeyIdSecretKey: "SEAWEEDFS_S3_ACCESS_KEY_ID"

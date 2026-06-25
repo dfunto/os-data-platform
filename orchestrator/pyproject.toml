@@ -5,8 +5,12 @@ description = "Data Platform orchestrator"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "common",
     "dagster",
     "dagster-postgres",
     "dagster-k8s",
     "dagster-webserver",
 ]
+
+[tool.uv.sources]
+common = { path = "../libs" }

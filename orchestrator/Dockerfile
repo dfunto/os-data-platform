@@ -3,6 +3,7 @@ FROM python:3.12
 WORKDIR /orchestrator/
 COPY pyproject.toml .
 COPY src/ src/
+COPY --from=libs . /libs/
 
 # Make sure that logs show up immediately instead of being buffered
 ENV PYTHONUNBUFFERED=1

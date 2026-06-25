@@ -1,5 +1,5 @@
 load_from:
   - grpc_server:
-      host: dags
+      host: user_code
       port: 3030
       location_name: orchestrator

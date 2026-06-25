@@ -20,3 +20,5 @@ seaweedfs:
     createBuckets:
       - name: os-data-platform-ingestor
         anonymousRead: false
+      - name: lakehouse-raw
+        anonymousRead: false

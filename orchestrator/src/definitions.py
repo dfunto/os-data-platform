@@ -1,9 +1,11 @@
 import dagster as dg
 
+from assets.ingestion import build_ingestion_asset
+from common.user_config import UserConfig
 
-@dg.asset()
-def ingest_s3(context: dg.AssetExecutionContext):
-    """Transform raw orders into clean table."""
-    context.log.info("todo...")
-    # TODO: replace with actual transformation logic
-    return {"rows": 0}
+
+user_config = UserConfig(config_dir="./configuration")
+assets = [
+    *[build_ingestion_asset(config) for config in user_config.ingestion]
+]
+defs = dg.Definitions(assets=assets)
