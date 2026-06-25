@@ -1,13 +1,12 @@
 name: source1
 source_type: "s3"
-config:
+s3_config:
   bucket: temp-test-oss-data-platform
-  aws_access_key_id: "secret:os-data-platform/ingestor-source-aws/key"
-  aws_secret_access_key: "secret:os-data-platform/ingestor-source-aws/secret"
-  streams:
-    - name: source1_table1
-      globs:
-        - source1/table1/**
-      format:
-        filetype: parquet
-        decimal_as_float: false
+  k8s_secret: "os-data-platform/ingestor-source-aws"
+  k8s_secret_aws_key: "key"
+  k8s_secret_aws_secret: "secret"
+  tables:
+    - name: table1
+      prefix: "source1/table1/**"
+      file_format: parquet
+

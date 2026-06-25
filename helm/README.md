@@ -52,6 +52,16 @@ kubectl create secret generic storage-seaweedfs-secret \
 # Orchestrator (Dagster)
 kubectl create secret generic orchestrator-postgresql-secret --from-literal=postgresql-password=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
 
+kubectl annotate secret orchestrator-postgresql-secret \
+    meta.helm.sh/release-name=orchestrator \
+    meta.helm.sh/release-namespace=os-data-platform \
+    -n os-data-platform
+
+kubectl label secret orchestrator-postgresql-secret \
+    app.kubernetes.io/managed-by=Helm \
+    -n os-data-platform
+
+
 # Ingestor (Airbyte)
 kubectl create secret generic ingestor-postgresql-secret \
     --from-literal=DATABASE_USER=platform \

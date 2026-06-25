@@ -23,8 +23,12 @@ dagster-user-deployments:
         - "--python-file"
         - "src/definitions.py"
       port: 3030
+      env:
+        - name: SEAWEEDFS_ENDPOINT_URL
+          value: "http://storage-seaweedfs-s3.os-data-platform.svc.cluster.local:8333"
       envSecrets:
         - name: metadata-db-postgresql-secret
+        - name: storage-seaweedfs-secret
 
 dagsterWebserver:
   replicaCount: 1

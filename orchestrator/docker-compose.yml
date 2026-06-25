@@ -5,6 +5,8 @@ x-dagster-image: &dagster_image
       - libs=../libs
   image: dadutra2/os-data-platform-orchestrator:latest
   env_file: .env
+  environment:
+    - SEAWEEDFS_S3_SECRET_ACCESS_KEY=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
 
 services:
   postgres:
@@ -26,6 +28,7 @@ services:
     volumes:
       - ./src:/orchestrator/src  # hot reload during development
       - ../configuration:/orchestrator/configuration
+      - ~/.kube/config:/root/.kube/config:ro
     depends_on:
       postgres:
         condition: service_healthy
