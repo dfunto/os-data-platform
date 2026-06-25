@@ -2,10 +2,16 @@ seaweedfs:
   master:
     enabled: true
     replicas: 1
+    extraArgs:
+      - -volumePreallocate=false
+      - -defaultReplication=000
 
   volume:
     enabled: true
     replicas: 1
+    extraArgs:
+      - -max=20
+      - -preStopSeconds=0
 
   filer:
     enabled: true
