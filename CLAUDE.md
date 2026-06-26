@@ -88,7 +88,10 @@ kubectl port-forward svc/dagster-dagster-webserver 3000:80 -n dagster
 # UI at http://localhost:3000
 ```
 
-## Roadmap
+## Warehouse (ClickHouse)
 
-- [x] Dagster setup
-- [ ] CDC Ingestion
+- Deployed via custom Helm chart in `helm/warehouse/`
+- Uses ClickHouse Operator (`clickhouse.com/v1alpha1` CRDs)
+- S3 named collection `seaweedfs` configured via ConfigMap (points to SeaweedFS S3 endpoint)
+- Init SQL creates databases: `raw`, `cleansed`, `curated`
+- Keeper cluster for coordination
