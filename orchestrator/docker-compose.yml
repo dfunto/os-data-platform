@@ -26,7 +26,8 @@ services:
     command: dagster code-server start -h 0.0.0.0 -p 3030 -f src/definitions.py
     container_name: dagster-user-code
     volumes:
-      - ./src:/orchestrator/src  # hot reload during development
+      - ./dagster.yaml:/dagster/dagster.yaml
+      - ./src:/orchestrator/src
       - ../configuration:/orchestrator/configuration
       - ~/.kube/config:/root/.kube/config:ro
     depends_on:

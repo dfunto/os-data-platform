@@ -17,10 +17,8 @@ Open source data platform built on Kubernetes.
 - Deploy Metadata Database (Postgres) ✅
 - Deploy File Storage (SeaweedFS) ✅
 - Deploy Ingestion Engine (Airbyte) ✅
-- 
 - S3 Ingestion Capability
   - Configuration Interface (YAML) ✅
-  - Airbyte Sources Configuration (Pulumi) ✅
   - 
 
 

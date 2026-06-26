@@ -12,6 +12,16 @@ class CapabilityConfig(BaseModel, ABC):
     capability_name: ClassVar[str]
 
 
+class LakehouseLayer(Enum):
+    RAW = "raw"
+    CLEANSED = "cleansed"
+    CURATED = "curated"
+
+    @property
+    def bucket(self):
+        return f"lakehouse-{self.value}"
+
+
 class IngestionSourceType(Enum):
     S3 = "s3"
     AIRBYTE = "airbyte"

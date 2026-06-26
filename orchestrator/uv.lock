@@ -397,6 +397,7 @@ version = "0.1.0"
 source = { directory = "../libs" }
 dependencies = [
     { name = "croniter" },
+    { name = "kubernetes" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
@@ -404,6 +405,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "croniter" },
+    { name = "kubernetes" },
     { name = "pydantic", specifier = "==2.11.7" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pyyaml" },
