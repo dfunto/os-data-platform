@@ -1,0 +1,51 @@
+apiVersion: clickhouse.com/v1alpha1
+kind: ClickHouseCluster
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "warehouse.labels" . | nindent 4 }}
+spec:
+  shards: {{ .Values.clickhouse.shards }}
+  replicas: {{ .Values.clickhouse.replicas }}
+  dataVolumeClaimSpec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: {{ .Values.clickhouse.storage.size }}
+  keeperClusterRef:
+    name: {{ .Release.Name }}-keeper
+  versionProbeTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: version-probe
+              resources:
+                limits:
+                  memory: 1Gi
+                requests:
+                  memory: 512Mi
+  podTemplate:
+    volumes:
+      - name: s3-named-collection
+        configMap:
+          name: {{ .Release.Name }}-s3-config
+  containerTemplate:
+    env:
+      - name: SEAWEEDFS_S3_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: {{ .Values.s3.secretName }}
+            key: SEAWEEDFS_S3_ACCESS_KEY_ID
+      - name: SEAWEEDFS_S3_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ .Values.s3.secretName }}
+            key: SEAWEEDFS_S3_SECRET_ACCESS_KEY
+    volumeMounts:
+      - name: s3-named-collection
+        mountPath: /etc/clickhouse-server/conf.d/
+    resources:
+      {{- toYaml .Values.clickhouse.resources | nindent 6 }}

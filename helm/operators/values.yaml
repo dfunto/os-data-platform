@@ -1,0 +1,7 @@
+clickhouse-operator-helm:
+  certManager:
+    enabled: false
+  webhook:
+    enabled: false
+  metrics:
+    secure: false

@@ -77,8 +77,11 @@ helm install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data
 helm dependency update helm/storage
 helm install storage ./helm/storage -n os-data-platform
 helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
-helm install ingestor airbyte-v2/airbyte -f helm/ingestor/values.yaml -n os-data-platform 
+helm install ingestor airbyte-v2/airbyte -f helm/ingestor/values.yaml -n os-data-platform
 
+helm dependency update helm/warehouse
+helm install operators ./helm/operators -n os-data-platform
+helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform
 ```
 
 ## Accessing UI

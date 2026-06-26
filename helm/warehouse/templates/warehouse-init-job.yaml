@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-clickhouse-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "warehouse.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: docker.io/clickhouse/clickhouse-server:latest
+          command:
+            - clickhouse-client
+            - --host
+            - {{ .Release.Name }}-clickhouse-headless
+            - --port
+            - "9001"
+            - --multiquery
+            - --queries-file
+            - /init/init.sql
+          volumeMounts:
+            - name: init-sql
+              mountPath: /init
+      volumes:
+        - name: init-sql
+          configMap:
+            name: {{ .Release.Name }}-clickhouse-init
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-clickhouse-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "warehouse.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  init.sql: |
+    {{- .Values.clickhouse.initSQL | nindent 4 }}

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: operators
+description: Kubernetes operators required by the platform
+type: application
+version: 0.1.0
+dependencies:
+  - name: clickhouse-operator-helm
+    version: "0.0.6"
+    repository: "oci://ghcr.io/clickhouse"

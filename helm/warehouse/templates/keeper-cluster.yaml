@@ -1,0 +1,9 @@
+apiVersion: clickhouse.com/v1alpha1
+kind: KeeperCluster
+metadata:
+  name: {{ .Release.Name }}-keeper
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "warehouse.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.keeper.replicas }}

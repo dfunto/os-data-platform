@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-s3-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "warehouse.labels" . | nindent 4 }}
+data:
+  s3-named-collection.xml: |
+    <clickhouse>
+      <named_collections>
+        <seaweedfs>
+          <url>http://{{ .Values.s3.host }}:{{ .Values.s3.port }}/{{ .Values.s3.bucket }}/</url>
+          <access_key_id from_env="SEAWEEDFS_S3_ACCESS_KEY_ID" />
+          <secret_access_key from_env="SEAWEEDFS_S3_SECRET_ACCESS_KEY" />
+        </seaweedfs>
+      </named_collections>
+    </clickhouse>

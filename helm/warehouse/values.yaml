@@ -1,0 +1,25 @@
+s3:
+  secretName: storage-seaweedfs-secret
+  host: storage-seaweedfs-s3
+  port: 8333
+  bucket: lakehouse-raw
+
+keeper:
+  replicas: 1
+
+clickhouse:
+  replicas: 1
+  shards: 1
+  storage:
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  initSQL: |
+    CREATE DATABASE IF NOT EXISTS raw;
+    CREATE DATABASE IF NOT EXISTS cleansed;
+    CREATE DATABASE IF NOT EXISTS curated;
