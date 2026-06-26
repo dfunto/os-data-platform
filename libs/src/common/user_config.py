@@ -4,7 +4,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import TypeVar
 
-from common.models import IngestionConfig, CapabilityConfig
+from common.models.core import IngestionConfig, CapabilityConfig
 
 
 T = TypeVar("T", bound=CapabilityConfig)

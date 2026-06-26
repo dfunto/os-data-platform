@@ -1,25 +1,7 @@
 import base64
-from abc import ABC
 from enum import Enum
 from functools import cached_property
-from pathlib import Path
-from typing import ClassVar
-from pydantic import BaseModel, computed_field, model_validator
-
-
-class CapabilityConfig(BaseModel, ABC):
-    file_path: Path
-    capability_name: ClassVar[str]
-
-
-class LakehouseLayer(Enum):
-    RAW = "raw"
-    CLEANSED = "cleansed"
-    CURATED = "curated"
-
-    @property
-    def bucket(self):
-        return f"lakehouse-{self.value}"
+from pydantic import BaseModel, computed_field
 
 
 class IngestionSourceType(Enum):
@@ -69,24 +51,3 @@ class IngestionS3Config(BaseModel):
         return self.k8s_secret_data[self.k8s_secret_aws_secret]
 
 
-class IngestionConfig(CapabilityConfig):
-    capability_name: ClassVar[str] = "ingestion"
-    name: str
-    source_type: IngestionSourceType
-    s3_config: IngestionS3Config | None = None
-    airbyte_config: dict | None = None
-
-    @model_validator(mode="after")
-    def validate_config_matches_source(self):
-        config_map = {
-            IngestionSourceType.S3: "s3_config",
-            IngestionSourceType.AIRBYTE: "airbyte_config",
-        }
-        field = config_map[self.source_type]
-        if getattr(self, field) is None:
-            raise ValueError(f"source_type '{self.source_type.value}' requires {field}")
-        return self
-
-    @computed_field
-    def application(self) -> str:
-        return self.file_path.stem

@@ -3,7 +3,7 @@ import dagster as dg
 from common.user_config import UserConfig
 from assets.ingestion import IngestionAssetBuilder
 from resources.lakehouse import LakehouseResource
-
+from resources.warehouse import WarehouseResource
 
 user_config = UserConfig(config_dir="./configuration")
 assets: list[dg.AssetsDefinition] = [
@@ -12,7 +12,8 @@ assets: list[dg.AssetsDefinition] = [
     for asset in IngestionAssetBuilder.get_builder(config).build()
 ]
 resources: dict[str, dg.ConfigurableResource] = {
-    "lakehouse": LakehouseResource()
+    "lakehouse": LakehouseResource(),
+    "warehouse": WarehouseResource()
 }
 
 defs = dg.Definitions(
