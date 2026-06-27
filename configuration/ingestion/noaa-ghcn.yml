@@ -1,0 +1,54 @@
+name: noaa_ghcn
+description: "Public GHCN (Global Historical Climatology Network) data from the NOAA (National Oceanic and Atmospheric Administration)"
+source_type: "s3"
+s3_config:
+  bucket: noaa-ghcn-pds
+  disable_auth: true
+  tables:
+    - name: countries
+      description: "List of country codes (FIPS) and names"
+      prefix: "ghcnd-countries.txt"
+      file_format: Regexp
+      columns:
+        - name: code
+        - name: name
+      settings:
+        format_regexp: "^(.{2}) (.+)$"
+    - name: inventory
+      description: "File listing the periods of record for each station and element"
+      prefix: "ghcnd-inventory.txt"
+      file_format: Regexp
+      columns:
+        - name: station_id
+        - name: latitude
+        - name: longitude
+        - name: element
+        - name: first_year
+        - name: last_year
+      settings:
+        format_regexp: "^(.{11}) (.{8}) (.{9}) (.{4}) (.{4}) (.{4})$"
+    - name: stations
+      description: "List of stations and their metadata (e.g., coordinates)"
+      prefix: "ghcnd-stations.txt"
+      file_format: Regexp
+      columns:
+        - name: station_id
+        - name: latitude
+        - name: longitude
+        - name: elevation
+        - name: state
+        - name: name
+        - name: gsn_flag
+        - name: hcn_crn_flag
+        - name: wmo_id
+      settings:
+        format_regexp: "^(.{11}) (.{8}) (.{9}) (.{6}) (.{2}) (.{30}) (.{3}) (.{3}) (.{5})\\s*$"
+    - name: states
+      description: "List of U.S. state and Canadian Province codes used in stations tables"
+      prefix: "ghcnd-states.txt"
+      file_format: Regexp
+      columns:
+        - name: code
+        - name: name
+      settings:
+        format_regexp: "^(.{2}) (.+)$"

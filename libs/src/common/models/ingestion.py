@@ -1,7 +1,7 @@
 import base64
 from enum import Enum
 from functools import cached_property
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, computed_field, model_validator
 
 
 class IngestionSourceType(Enum):
@@ -9,18 +9,49 @@ class IngestionSourceType(Enum):
     AIRBYTE = "airbyte"
 
 
+class ClickHouseFileFormat(Enum):
+    PARQUET = "Parquet"
+    CSV = "CSV"
+    CSV_WITH_NAMES = "CSVWithNames"
+    TSV = "TabSeparated"
+    JSON_EACH_ROW = "JSONEachRow"
+    AVRO = "Avro"
+    ORC = "ORC"
+    ARROW = "Arrow"
+    REGEXP = "Regexp"
+    LINE_AS_STRING = "LineAsString"
+
+
+class ColumnDefinition(BaseModel):
+    name: str
+    type: str = "String"
+
+
 class IngestionS3TableConfig(BaseModel):
     name: str
+    description: str | None = None
     prefix: str
-    file_format: str
+    file_format: ClickHouseFileFormat
+    columns: list[ColumnDefinition] | None = None
+    settings: dict[str, str] | None = None
 
 
 class IngestionS3Config(BaseModel):
     bucket: str
-    k8s_secret: str
-    k8s_secret_aws_key: str
-    k8s_secret_aws_secret: str
+    disable_auth: bool = False
+    k8s_secret: str | None = None
+    k8s_secret_aws_key: str | None = None
+    k8s_secret_aws_secret: str | None = None
     tables: list[IngestionS3TableConfig]
+
+    @model_validator(mode="after")
+    def validate_auth_config(self):
+        if not self.disable_auth:
+            missing = [f for f in ("k8s_secret", "k8s_secret_aws_key", "k8s_secret_aws_secret")
+                       if getattr(self, f) is None]
+            if missing:
+                raise ValueError(f"When disable_auth is false, these fields are required: {', '.join(missing)}")
+        return self
 
     @computed_field
     @cached_property

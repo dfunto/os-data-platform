@@ -1,10 +1,10 @@
+import re
 from abc import ABC
 from enum import Enum
-
 from pathlib import Path
 from typing import ClassVar
-from pydantic import BaseModel, model_validator, computed_field
 
+from pydantic import BaseModel, computed_field, field_validator, model_validator
 from common.models.ingestion import IngestionSourceType, IngestionS3Config
 
 
@@ -23,23 +23,20 @@ class LakehouseLayer(Enum):
         return f"lakehouse-{self.value}"
 
 
-class ClickHouseFileFormat(Enum):
-  PARQUET = "Parquet"
-  CSV = "CSV"
-  CSV_WITH_NAMES = "CSVWithNames"
-  TSV = "TabSeparated"
-  JSON_EACH_ROW = "JSONEachRow"
-  AVRO = "Avro"
-  ORC = "ORC"
-  ARROW = "Arrow"
-
-
 class IngestionConfig(CapabilityConfig):
     capability_name: ClassVar[str] = "ingestion"
     name: str
+    description: str | None = None
     source_type: IngestionSourceType
     s3_config: IngestionS3Config | None = None
     airbyte_config: dict | None = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        if not re.fullmatch(r"[a-z0-9_]+", v):
+            raise ValueError(f"name must contain only lowercase letters, numbers, and underscores, got: '{v}'")
+        return v
 
     @model_validator(mode="after")
     def validate_config_matches_source(self):

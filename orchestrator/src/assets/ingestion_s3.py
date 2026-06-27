@@ -1,7 +1,9 @@
 import boto3
 import dagster as dg
 
+from botocore import UNSIGNED
 from botocore.client import BaseClient
+from botocore.config import Config
 from functools import cached_property
 from assets.ingestion import IngestionAssetBuilder
 from common.models.ingestion import IngestionS3TableConfig
@@ -28,6 +30,8 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
 
     @cached_property
     def _client(self) -> BaseClient:
+        if self.s3_config.disable_auth:
+            return boto3.client("s3", config=Config(signature_version=UNSIGNED))
         return boto3.client(
             "s3",
             aws_access_key_id=self.s3_config.aws_access_key_id,
@@ -54,6 +58,9 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
             create_raw_table
         ]
 
+    def _get_target_prefix(self, table: IngestionS3TableConfig) -> str:
+        return f"{self.config.name}/{table.name}"
+
     def _copy_s3_table(
         self,
         context: dg.AssetExecutionContext,
@@ -63,15 +70,17 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
         lakehouse_client = lakehouse.get_client()
         total_copied = 0
 
-        prefix = table.prefix.rstrip("/*")
-        context.log.info(f"Listing {self.s3_config.bucket}/{prefix}")
+        source_prefix = table.prefix.rstrip("/*")
+        target_prefix = self._get_target_prefix(table)
+        context.log.info(f"Listing {self.s3_config.bucket}/{source_prefix}")
         paginator = self._client.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=self.s3_config.bucket, Prefix=prefix):
+        for page in paginator.paginate(Bucket=self.s3_config.bucket, Prefix=source_prefix):
             for obj in page.get("Contents", []):
                 key = obj["Key"]
                 context.log.info(f"Copying {key}")
                 data = self._client.get_object(Bucket=self.s3_config.bucket, Key=key)["Body"].read()
-                lakehouse_client.put_object(Bucket=LakehouseLayer.RAW.bucket, Key=key, Body=data)
+                relative_key = key[len(source_prefix):].lstrip("/") or key.rsplit("/", 1)[-1]
+                lakehouse_client.put_object(Bucket=LakehouseLayer.RAW.bucket, Key=f"{target_prefix}/{relative_key}", Body=data)
                 total_copied += 1
 
         return total_copied
@@ -87,7 +96,10 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
                 "ingestion/create_raw_table.sql",
                 source_name=self.config.name,
                 table_name=table.name,
-                prefix=table.prefix.rstrip("/*"),
+                prefix=f"{self._get_target_prefix(table)}/*",
+                file_format=table.file_format.value,
+                columns=table.columns,
+                settings=table.settings,
             )
             context.log.info(f"Running sql query: {sql}")
             client.execute(query=sql)
