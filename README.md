@@ -1,5 +1,7 @@
 # Open Source Data Platform
 
+> **Work in Progress** — This project is under active development. The orchestration and ingestion layers are functional, but transformation, scheduling, and monitoring capabilities are not yet implemented.
+
 An open-source data platform built entirely on Kubernetes using free and open-source software. Designed for teams that want full ownership of their data stack without vendor lock-in.
 
 ## Architecture
