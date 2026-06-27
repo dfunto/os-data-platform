@@ -4,22 +4,16 @@ Dagster-based orchestration layer. Dynamically generates ingestion assets from Y
 
 ## How It Works
 
-```
-configuration/ingestion/*.yml
-        │
-        ▼
-  UserConfig (loads YAML)
-        │
-        ▼
-  IngestionAssetBuilder.get_builder(config)
-        │
-        ├── S3 source_type ──▶ S3IngestionAssetBuilder
-        └── Airbyte (planned) ──▶ NotImplementedError
-        │
-        ▼
-  Per table, two assets generated:
-    ingest_{source}_{table}  ──▶  copy S3 files to SeaweedFS lakehouse-raw
-    raw_{source}_{table}     ──▶  CREATE TABLE in ClickHouse via S3 engine
+```mermaid
+graph TD
+    YAML["configuration/ingestion/*.yml"] --> UC["UserConfig<br/>(loads + validates YAML)"]
+    UC --> Factory["IngestionAssetBuilder.get_builder(config)"]
+    Factory -->|"source_type = s3"| S3Builder["S3IngestionAssetBuilder"]
+    Factory -->|"source_type = airbyte"| NotImpl["NotImplementedError<br/>(planned)"]
+    S3Builder --> Assets["Per table, two assets generated"]
+    Assets --> Ingest["ingest_{source}_{table}<br/>Copy S3 files → SeaweedFS lakehouse-raw"]
+    Assets --> Raw["raw_{source}_{table}<br/>CREATE TABLE in ClickHouse via S3 engine"]
+    Ingest --> Raw
 ```
 
 ### Entry Point

@@ -4,31 +4,43 @@ An open-source data platform built entirely on Kubernetes using free and open-so
 
 ## Architecture
 
-```
-                                    ┌──────────────────────────────────────────────────┐
-                                    │                  Kubernetes Cluster               │
-                                    │                                                  │
-  ┌──────────────┐                  │  ┌─────────────┐       ┌──────────────────────┐  │
-  │  Source S3    │─── S3 copy ────▶│  │  SeaweedFS   │       │  Dagster             │  │
-  │  Buckets     │                  │  │  (lakehouse) │◀──────│  (orchestrator)      │  │
-  └──────────────┘                  │  │              │       │                      │  │
-                                    │  │  lakehouse-  │       │  webserver / daemon / │  │
-  ┌──────────────┐                  │  │  raw/        │       │  user code            │  │
-  │  APIs / SaaS │─── Airbyte ────▶│  │  cleansed/   │       └──────────┬───────────┘  │
-  │  CDC         │                  │  │  curated/    │                  │              │
-  └──────────────┘                  │  └──────┬───────┘                  │              │
-                                    │         │ S3 engine                │ SQL          │
-                                    │         ▼                         ▼              │
-                                    │  ┌────────────────────────────────────────────┐  │
-                                    │  │              ClickHouse (warehouse)         │  │
-                                    │  │  raw DB ─▶ cleansed DB ─▶ curated DB       │  │
-                                    │  └────────────────────────────────────────────┘  │
-                                    │                                                  │
-                                    │  ┌─────────────┐       ┌──────────────────────┐  │
-                                    │  │  PostgreSQL  │       │  Airbyte             │  │
-                                    │  │  (metadata)  │       │  (ingestor)          │  │
-                                    │  └─────────────┘       └──────────────────────┘  │
-                                    └──────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Sources
+        S3["Source S3 Buckets"]
+        API["APIs / SaaS / CDC"]
+    end
+
+    subgraph K8s["Kubernetes Cluster"]
+        subgraph Orchestration
+            Dagster["Dagster<br/><i>orchestrator</i><br/>webserver / daemon / user code"]
+        end
+
+        subgraph Storage
+            SeaweedFS["SeaweedFS<br/><i>lakehouse</i><br/>lakehouse-raw / cleansed / curated"]
+        end
+
+        subgraph Warehouse
+            ClickHouse["ClickHouse<br/><i>warehouse</i><br/>raw DB → cleansed DB → curated DB"]
+        end
+
+        subgraph Ingestion
+            Airbyte["Airbyte<br/><i>ingestor</i>"]
+        end
+
+        subgraph Metadata
+            Postgres["PostgreSQL<br/><i>metadata</i>"]
+        end
+    end
+
+    S3 -- "S3 copy<br/>(Dagster asset)" --> SeaweedFS
+    API -- "Connectors" --> Airbyte
+    Airbyte -- "Raw files" --> SeaweedFS
+    Dagster -- "Copies files" --> SeaweedFS
+    Dagster -- "CREATE TABLE<br/>(SQL)" --> ClickHouse
+    SeaweedFS -- "S3 engine<br/>(reads in-place)" --> ClickHouse
+    Postgres -. "metadata" .-> Dagster
+    Postgres -. "metadata" .-> Airbyte
 ```
 
 ### Data Flow

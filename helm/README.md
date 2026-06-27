@@ -15,16 +15,49 @@ Full Kubernetes deployment runbook for the data platform. All services deploy in
 
 ## Architecture on K8s
 
-```
-os-data-platform namespace
-├── metadata-postgresql           # Shared Postgres (dagster DB + airbyte DB)
-├── storage-seaweedfs-*           # master + volume + filer + S3 gateway
-│   └── Buckets: lakehouse-raw, os-data-platform-ingestor
-├── orchestrator-dagster-*        # webserver + daemon + user-code (gRPC)
-├── ingestor-airbyte-*            # server + worker + webapp
-├── clickhouse-operator           # CRD controller
-├── warehouse-clickhouse          # ClickHouse cluster (reads from SeaweedFS via S3 engine)
-└── warehouse-keeper              # ClickHouse Keeper (coordination)
+```mermaid
+graph LR
+    subgraph ns["os-data-platform namespace"]
+        direction TB
+        subgraph meta["metadata"]
+            PG["metadata-postgresql<br/><i>dagster DB + airbyte DB</i>"]
+        end
+
+        subgraph stor["storage"]
+            SW_master["seaweedfs-master"]
+            SW_vol["seaweedfs-volume"]
+            SW_filer["seaweedfs-filer"]
+            SW_s3["seaweedfs-s3<br/><i>:8333</i>"]
+        end
+
+        subgraph orch["orchestrator"]
+            D_web["dagster-webserver"]
+            D_daemon["dagster-daemon"]
+            D_code["dagster-user-code<br/><i>gRPC :3030</i>"]
+        end
+
+        subgraph ing["ingestor"]
+            A_srv["airbyte-server"]
+            A_wrk["airbyte-worker"]
+            A_web["airbyte-webapp"]
+        end
+
+        subgraph wh["warehouse"]
+            CH_op["clickhouse-operator"]
+            CH["clickhouse-cluster<br/><i>S3 engine → SeaweedFS</i>"]
+            CH_keep["clickhouse-keeper"]
+        end
+    end
+
+    D_code --> SW_s3
+    D_code --> CH
+    A_wrk --> SW_s3
+    D_web --> D_code
+    D_daemon --> D_code
+    D_code -.-> PG
+    A_srv -.-> PG
+    CH_op --> CH
+    CH --> SW_s3
 ```
 
 ## Prerequisites

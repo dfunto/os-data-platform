@@ -13,13 +13,11 @@ Custom Helm chart deploying a ClickHouse cluster managed by the ClickHouse Opera
 
 ## How S3 Integration Works
 
-```
-ConfigMap (s3-named-collection.xml)
-  └── Mounted at /etc/clickhouse-server/conf.d/
-        └── Defines named collection "seaweedfs":
-              url: http://storage-seaweedfs-s3:8333/lakehouse-raw/
-              access_key_id: from SEAWEEDFS_S3_ACCESS_KEY_ID env
-              secret_access_key: from SEAWEEDFS_S3_SECRET_ACCESS_KEY env
+```mermaid
+graph LR
+    CM["ConfigMap<br/><b>s3-named-collection.xml</b>"] -->|"mounted at<br/>/etc/clickhouse-server/conf.d/"| CH["ClickHouse Pod"]
+    Secret["K8s Secret<br/><i>storage-seaweedfs-secret</i>"] -->|"env vars:<br/>SEAWEEDFS_S3_ACCESS_KEY_ID<br/>SEAWEEDFS_S3_SECRET_ACCESS_KEY"| CH
+    CH -->|"Named collection: seaweedfs<br/>url: http://storage-seaweedfs-s3:8333/lakehouse-raw/"| SW["SeaweedFS S3"]
 ```
 
 ClickHouse tables use this named collection:
