@@ -25,6 +25,7 @@ class ClickHouseFileFormat(Enum):
 class ColumnDefinition(BaseModel):
     name: str
     type: str = "String"
+    expression: str | None = None
 
 
 class IngestionS3TableConfig(BaseModel):
@@ -32,6 +33,7 @@ class IngestionS3TableConfig(BaseModel):
     description: str | None = None
     prefix: str
     file_format: ClickHouseFileFormat
+    full_refresh: bool = False
     columns: list[ColumnDefinition] | None = None
     settings: dict[str, str] | None = None
 
@@ -39,6 +41,7 @@ class IngestionS3TableConfig(BaseModel):
 class IngestionS3Config(BaseModel):
     bucket: str
     disable_auth: bool = False
+    full_refresh: bool = False
     k8s_secret: str | None = None
     k8s_secret_aws_key: str | None = None
     k8s_secret_aws_secret: str | None = None

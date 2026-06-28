@@ -47,6 +47,7 @@ clickhouse:
     requests: { cpu: 250m, memory: 512Mi }
     limits: { cpu: "2", memory: 4Gi }
   initSQL: |                              # Runs via post-install Helm hook
+    CREATE DATABASE IF NOT EXISTS temp;
     CREATE DATABASE IF NOT EXISTS raw;
     CREATE DATABASE IF NOT EXISTS cleansed;
     CREATE DATABASE IF NOT EXISTS curated;

@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS {{ database }}.`{{ source_name }}_{{ table_name }}`;

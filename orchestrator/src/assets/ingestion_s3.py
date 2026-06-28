@@ -1,6 +1,8 @@
 import boto3
 import dagster as dg
 
+from datetime import datetime
+
 from botocore import UNSIGNED
 from botocore.client import BaseClient
 from botocore.config import Config
@@ -85,22 +87,94 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
 
         return total_copied
 
+    @staticmethod
+    def _get_incremental_load_statements(template_vars: dict) -> list[dict]:
+        return [
+            {
+                "template": "ingestion/create_table_from_file.sql",
+                "vars": {
+                    **template_vars,
+                    "database": "temp"
+                }
+            },
+            {
+                "template": "common/copy_table.sql",
+                "vars": {
+                    **template_vars,
+                    "source_database": "temp",
+                    "target_database": "raw",
+                    "schema_only": True
+                }
+            },
+            {
+                "template": "common/swap_tables.sql",
+                "vars": {
+                    **template_vars,
+                    "source_database": "temp",
+                    "target_database": "raw",
+                }
+            },
+            {
+                "template": "common/drop_table.sql",
+                "vars": {
+                    **template_vars,
+                    "database": "temp",
+                }
+            }
+        ]
+
+    @staticmethod
+    def _get_full_refresh_statements(template_vars: dict) -> list[dict]:
+        return [
+            {
+                "template": "ingestion/create_table_from_file.sql",
+                "vars": {
+                    **template_vars,
+                    "database": "raw",
+                    "schema_only": True
+                }
+            },
+            {
+                "template": "ingestion/insert_from_file.sql",
+                "vars": {
+                    **template_vars,
+                    "database": "raw",
+                }
+            },
+        ]
+
     def _run_sql(
         self,
         context: dg.AssetExecutionContext,
         table: IngestionS3TableConfig,
         warehouse: WarehouseResource
     ) -> bool:
+        template_vars = dict(
+            source_name=self.config.name,
+            table_name=table.name,
+            prefix=f"{self._get_target_prefix(table)}/*",
+            file_format=table.file_format.value,
+            columns=table.columns,
+            settings=table.settings,
+            full_refresh=table.full_refresh,
+            ingested_at=datetime.fromtimestamp(
+                context.instance.get_run_stats(context.run_id).launch_time
+            ).isoformat(),
+        )
         with warehouse.get_connection() as client:
-            sql = self.read_sql(
-                "ingestion/create_raw_table.sql",
-                source_name=self.config.name,
-                table_name=table.name,
-                prefix=f"{self._get_target_prefix(table)}/*",
-                file_format=table.file_format.value,
-                columns=table.columns,
-                settings=table.settings,
+            statements = (
+                self._get_full_refresh_statements(template_vars)
+                if table.full_refresh
+                else self._get_incremental_load_statements(template_vars)
             )
-            context.log.info(f"Running sql query: {sql}")
-            client.execute(query=sql)
+            for statement in statements:
+                sql = self.read_sql(
+                    relative_path=statement['template'],
+                    **statement['vars']
+                )
+                context.log.info(f"Running sql: {sql}")
+                client.execute(query=sql)
+                context.add_output_metadata({
+                    "sql": dg.MetadataValue.md(f"```sql\n{sql}\n```")
+                })
         return True

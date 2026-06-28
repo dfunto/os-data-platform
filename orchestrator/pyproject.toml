@@ -12,6 +12,7 @@ dependencies = [
     "dagster-postgres",
     "dagster-webserver",
     "dagster-clickhouse",
+    "sqlparse",
 ]
 
 [tool.uv.sources]

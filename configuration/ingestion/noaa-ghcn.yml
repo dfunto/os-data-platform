@@ -9,6 +9,7 @@ s3_config:
       description: "List of country codes (FIPS) and names"
       prefix: "ghcnd-countries.txt"
       file_format: Regexp
+      full_refresh: true
       columns:
         - name: code
         - name: name
@@ -17,36 +18,50 @@ s3_config:
     - name: inventory
       description: "File listing the periods of record for each station and element"
       prefix: "ghcnd-inventory.txt"
-      file_format: Regexp
+      file_format: LineAsString
+      full_refresh: true
       columns:
         - name: station_id
+          expression: "trim(substring(line, 1, 11))"
         - name: latitude
+          expression: "trim(substring(line, 13, 8))"
         - name: longitude
+          expression: "trim(substring(line, 22, 9))"
         - name: element
+          expression: "trim(substring(line, 32, 4))"
         - name: first_year
+          expression: "trim(substring(line, 37, 4))"
         - name: last_year
-      settings:
-        format_regexp: "^(.{11}) (.{8}) (.{9}) (.{4}) (.{4}) (.{4})$"
+          expression: "trim(substring(line, 42, 4))"
     - name: stations
       description: "List of stations and their metadata (e.g., coordinates)"
       prefix: "ghcnd-stations.txt"
-      file_format: Regexp
+      file_format: LineAsString
+      full_refresh: true
       columns:
         - name: station_id
+          expression: "trim(substring(line, 1, 11))"
         - name: latitude
+          expression: "trim(substring(line, 13, 8))"
         - name: longitude
+          expression: "trim(substring(line, 22, 9))"
         - name: elevation
+          expression: "trim(substring(line, 32, 6))"
         - name: state
+          expression: "trim(substring(line, 39, 2))"
         - name: name
+          expression: "trim(substring(line, 42, 30))"
         - name: gsn_flag
+          expression: "trim(substring(line, 73, 3))"
         - name: hcn_crn_flag
+          expression: "trim(substring(line, 77, 3))"
         - name: wmo_id
-      settings:
-        format_regexp: "^(.{11}) (.{8}) (.{9}) (.{6}) (.{2}) (.{30}) (.{3}) (.{3}) (.{5})\\s*$"
+          expression: "trim(substring(line, 81, 5))"
     - name: states
       description: "List of U.S. state and Canadian Province codes used in stations tables"
       prefix: "ghcnd-states.txt"
       file_format: Regexp
+      full_refresh: true
       columns:
         - name: code
         - name: name

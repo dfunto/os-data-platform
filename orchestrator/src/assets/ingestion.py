@@ -1,6 +1,8 @@
 import dagster as dg
+import sqlparse
 
 from abc import ABC, abstractmethod
+from jinja2 import Template
 from pathlib import Path
 from common.models.ingestion import IngestionSourceType
 from common.models.core import IngestionConfig
@@ -24,9 +26,9 @@ class IngestionAssetBuilder(ABC):
 
     @staticmethod
     def read_sql(relative_path: str, **params) -> str:
-        from jinja2 import Template
         path = SQL_DIR / relative_path
-        return Template(path.read_text()).render(**params)
+        sql = Template(path.read_text()).render(**params)
+        return sqlparse.format(sql, reindent=True)
 
     @abstractmethod
     def build(self) -> list[dg.AssetsDefinition]:
