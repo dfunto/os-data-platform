@@ -158,7 +158,7 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
             settings=table.settings,
             full_refresh=table.full_refresh,
             ingested_at=datetime.fromtimestamp(
-                context.instance.get_run_stats(context.run_id).launch_time
+                context.instance.get_run_stats(context.run_id).launch_time  # TODO review this warning
             ).isoformat(),
         )
         with warehouse.get_connection() as client:
