@@ -1,6 +1,6 @@
 # Open Source Data Platform
 
-> **Work in Progress** — This project is under active development. The orchestration and ingestion layers are functional, but transformation, scheduling, and monitoring capabilities are not yet implemented.
+> **Work in Progress** — This project is under active development. Ingestion and transformation layers are functional. Scheduling, monitoring, and curated layer capabilities are not yet implemented.
 
 An open-source data platform built entirely on Kubernetes using free and open-source software. Designed for teams that want full ownership of their data stack without vendor lock-in.
 
@@ -35,14 +35,21 @@ graph TB
         end
     end
 
+    subgraph Transform
+        SQLMesh["SQLMesh<br/><i>transform</i><br/>cleansed / curated models"]
+    end
+
     S3 -- "S3 copy<br/>(Dagster asset)" --> SeaweedFS
     API -- "Connectors" --> Airbyte
     Airbyte -- "Raw files" --> SeaweedFS
     Dagster -- "Copies files" --> SeaweedFS
     Dagster -- "CREATE TABLE<br/>(SQL)" --> ClickHouse
     SeaweedFS -- "S3 engine<br/>(reads in-place)" --> ClickHouse
+    Dagster -- "dagster-sqlmesh" --> SQLMesh
+    SQLMesh -- "raw → cleansed<br/>(SQL)" --> ClickHouse
     Postgres -. "metadata" .-> Dagster
     Postgres -. "metadata" .-> Airbyte
+    Postgres -. "state" .-> SQLMesh
 ```
 
 ### Data Flow
@@ -51,7 +58,7 @@ graph TB
    - **File sources (S3)**: Dagster copies files byte-for-byte from source S3 buckets into SeaweedFS `lakehouse-raw` bucket
    - **API/SaaS/CDC sources**: Airbyte connectors handle auth, pagination, rate limiting and land data in the raw layer
 2. **Raw table creation** - Dagster creates ClickHouse tables using the S3 engine, pointing directly at raw parquet files in SeaweedFS
-3. **Transformation** (planned) - Data moves through `raw` -> `cleansed` -> `curated` databases in ClickHouse
+3. **Transformation** - SQLMesh models (orchestrated by Dagster via `dagster-sqlmesh`) transform data through `raw` -> `cleansed` -> `curated` databases in ClickHouse
 
 ### Lakehouse Layers
 
@@ -66,10 +73,11 @@ graph TB
 | Component | Tool | Purpose |
 |-----------|------|---------|
 | Orchestration | [Dagster](https://dagster.io) | Pipeline scheduling, asset management, observability |
+| Transformation | [SQLMesh](https://sqlmesh.com) | SQL-based data transformations with virtual environments |
 | Warehouse | [ClickHouse](https://clickhouse.com) | Columnar OLAP database with S3 engine |
 | Object Storage | [SeaweedFS](https://github.com/seaweedfs/seaweedfs) | S3-compatible distributed storage (lakehouse) |
 | Ingestion | [Airbyte](https://airbyte.com) | Connectors for API/SaaS/CDC sources |
-| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster and Airbyte |
+| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster, Airbyte, and SQLMesh |
 | Deployment | [Kubernetes](https://kubernetes.io) + [Helm](https://helm.sh) | Container orchestration and declarative deployment |
 | Shared Library | Python / [Pydantic](https://docs.pydantic.dev) | Config models, validation, K8s secret loading |
 

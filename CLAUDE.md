@@ -1,6 +1,6 @@
 # os-data-platform
 
-Open source data platform built on Kubernetes. Currently only orchestration layer exists.
+Open source data platform built on Kubernetes with ingestion, transformation, and warehouse layers.
 
 ## Goal
 
@@ -25,18 +25,31 @@ libs/                                   # Shared Python library ("common" packag
 
 orchestrator/                           # Dagster user code
   src/
-    definitions.py                      # Entry point: loads UserConfig, builds assets from config, registers Definitions
+    definitions.py                      # Entry point: loads UserConfig, builds ingestion + transform assets, registers Definitions
     assets/
       ingestion.py                      # IngestionAssetBuilder (ABC) + factory get_builder()
       ingestion_s3.py                   # S3IngestionAssetBuilder: copies S3 files to SeaweedFS lakehouse
+      transform.py                      # SQLMesh integration: dagster-sqlmesh assets with custom translator
     resources/
       lakehouse.py                      # LakehouseResource (extends S3Resource): boto3 client to SeaweedFS
+      warehouse.py                      # WarehouseResource: ClickHouse connection
   docker-compose.yml                    # Local dev: postgres, user_code, webserver, daemon
   dagster.yaml                          # Dagster instance config (postgres storage)
   workspace.yaml                        # gRPC server: host=user_code, port=3030
-  pyproject.toml                        # Deps: dagster, dagster-postgres, dagster-k8s, dagster-aws, common (path=../libs)
+  pyproject.toml                        # Deps: dagster, dagster-sqlmesh, sqlmesh[clickhouse], common (path=../libs)
   Dockerfile
   .env                                  # Local env vars (not committed secrets)
+  .python-version                       # Python >= 3.12
+
+transform/                              # SQLMesh project (transformation layer)
+  config.yaml                           # SQLMesh config: ClickHouse connection + Postgres state backend
+  models/
+    cleansed/                           # Cleansed layer models (FULL kind, reading from raw.*)
+      noaa_ghcn_countries.sql
+      noaa_ghcn_states.sql
+      noaa_ghcn_stations.sql
+      noaa_ghcn_inventory.sql
+  pyproject.toml                        # Deps: sqlmesh[clickhouse], psycopg2-binary
   .python-version                       # Python >= 3.12
 
 helm/                                   # Helm charts and values for K8s
@@ -53,17 +66,40 @@ helm/                                   # Helm charts and values for K8s
   README.md
 ```
 
+## Asset Pipeline
+
+The platform defines three asset groups forming a lineage:
+
+1. **Ingestion** (`ingest_*` assets) — copies files from source S3 buckets into SeaweedFS lakehouse
+2. **Raw** (`raw_*` assets) — creates ClickHouse tables from ingested files
+3. **Cleansed** (`cleansed_*` assets) — SQLMesh models that transform raw tables into cleansed tables
+
 ## Orchestrator (Dagster)
 
 - Python package in `orchestrator/`, requires Python >= 3.12
 - Deps on `common` library via `libs/` (path dependency)
-- Entry point: `src/definitions.py` — loads `UserConfig` from `./configuration`, builds assets via builder pattern
-- Builder pattern: `IngestionAssetBuilder.get_builder(config)` dispatches by `source_type` (S3, Airbyte)
+- Entry point: `src/definitions.py` — loads `UserConfig` from `./configuration`, builds ingestion + transform assets
+- Ingestion: `IngestionAssetBuilder.get_builder(config)` dispatches by `source_type` (S3, Airbyte)
 - S3 ingestion: reads from source S3 bucket, copies files to SeaweedFS lakehouse (`lakehouse-raw` bucket)
+- Transform: `dagster-sqlmesh` integration via `build_transform_assets()` in `assets/transform.py`
+  - Custom `SQLMeshDagsterTranslator` flattens FQNs (e.g., `raw.table` -> `raw_table`) to link SQLMesh deps to ingestion assets
+  - Custom `SQLMeshContextConfig` subclass provides the translator
+  - Runs against SQLMesh `prod` environment
 - Credentials: fetched from K8s secrets at runtime (configured per source in YAML)
 - Dagster served via gRPC on port 3030
 - Docker image: `dadutra2/os-data-platform-orchestrator:latest`
-- Local dev: `docker-compose.yml` (postgres + user_code + webserver + daemon), mounts `../configuration`
+- Local dev: `docker-compose.yml` (postgres + user_code + webserver + daemon), mounts `../configuration` and `../transform`
+
+## Transform (SQLMesh)
+
+- SQLMesh project in `transform/`, requires Python >= 3.12
+- Dialect: ClickHouse
+- Gateway: `clickhouse` (ClickHouse for execution, Postgres for state)
+- Connection hosts configurable via env vars: `SQLMESH_CLICKHOUSE_HOST`, `SQLMESH_POSTGRES_HOST` (default: `localhost`)
+- State DB password via `OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD`
+- Models in `models/cleansed/` read from `raw.*` tables and write to `cleansed.*`
+- Integrated into Dagster via `dagster-sqlmesh` — cleansed assets depend on raw ingestion assets
+- Can run standalone: `sqlmesh plan` / `sqlmesh run` from `transform/` directory
 
 ## Helm / K8s Deployment
 
