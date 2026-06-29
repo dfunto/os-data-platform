@@ -77,11 +77,15 @@ class IngestionS3Config(BaseModel):
     @computed_field
     @property
     def aws_access_key_id(self) -> str:
+        if not self.k8s_secret_aws_key:
+            raise ValueError("Missing s3_config property 'k8s_secret_aws_key'")
         return self.k8s_secret_data[self.k8s_secret_aws_key]
 
     @computed_field
     @property
     def aws_secret_access_key(self) -> str:
+        if not self.k8s_secret_aws_secret:
+            raise ValueError("Missing s3_config property 'k8s_secret_aws_secret'")
         return self.k8s_secret_data[self.k8s_secret_aws_secret]
 
 

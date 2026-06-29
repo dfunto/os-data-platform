@@ -3,7 +3,7 @@ gateways:
   clickhouse:
     state_connection:
       type: postgres
-      host: localhost       # port-forward metadata-postgresql
+      host: {{ env_var('SQLMESH_POSTGRES_HOST', 'localhost') }}
       port: 5432
       database: sqlmesh
       user: platform
@@ -11,7 +11,7 @@ gateways:
 
     connection:
       type: clickhouse
-      host: localhost
+      host: {{ env_var('SQLMESH_CLICKHOUSE_HOST', 'localhost') }}
       port: 8123
       pretty_sql: True
       username: ""

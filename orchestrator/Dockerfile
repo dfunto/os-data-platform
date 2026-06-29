@@ -4,6 +4,7 @@ WORKDIR /orchestrator/
 COPY pyproject.toml .
 COPY src/ src/
 COPY --from=libs . /libs/
+COPY --from=transform . /transform/
 
 # Make sure that logs show up immediately instead of being buffered
 ENV PYTHONUNBUFFERED=1

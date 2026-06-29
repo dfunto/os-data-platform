@@ -1,3 +1,5 @@
+import os
+
 import yaml
 
 from functools import cached_property
@@ -13,6 +15,7 @@ T = TypeVar("T", bound=CapabilityConfig)
 class UserConfig:
 
     def __init__(self, config_dir: str):
+        self.environment = os.getenv("OS_DATA_PLATFORM_ENVIRONMENT", "dev")
         self.config_dir = Path(config_dir)
         if not self.config_dir.is_dir():
             raise ValueError(f"config_dir not found: {config_dir}")

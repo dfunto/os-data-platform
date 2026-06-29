@@ -3,10 +3,12 @@ x-dagster-image: &dagster_image
     context: .
     additional_contexts:
       - libs=../libs
+      - transform=../transform
   image: dadutra2/os-data-platform-orchestrator:latest
   env_file: .env
   environment:
     - SEAWEEDFS_S3_SECRET_ACCESS_KEY=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
+    - OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
 
 services:
   postgres:
@@ -28,8 +30,14 @@ services:
     volumes:
       - ./dagster.yaml:/dagster/dagster.yaml
       - ./src:/orchestrator/src
+      - ../transform:/transform
       - ../configuration:/orchestrator/configuration
       - ~/.kube/config:/root/.kube/config:ro
+    healthcheck:
+      test: ["CMD-SHELL", "dagster api grpc-health-check -p 3030"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +55,7 @@ services:
       postgres:
         condition: service_healthy
       user_code:
-        condition: service_started
+        condition: service_healthy
 
   daemon:
     <<: *dagster_image
@@ -60,4 +68,4 @@ services:
       postgres:
         condition: service_healthy
       user_code:
-        condition: service_started
+        condition: service_healthy
