@@ -100,10 +100,11 @@ os-data-platform/
 │
 ├── orchestrator/                   # Dagster user code
 │   ├── src/
-│   │   ├── definitions.py          # Entry point: builds assets + resources from config
+│   │   ├── definitions.py          # Entry point: builds ingestion + transform assets, registers Definitions
 │   │   ├── assets/
 │   │   │   ├── ingestion.py        # Abstract builder + factory (dispatches by source_type)
-│   │   │   └── ingestion_s3.py     # S3 ingestion: copy to lakehouse + create raw table
+│   │   │   ├── ingestion_s3.py     # S3 ingestion: copy to lakehouse + create raw table
+│   │   │   └── transform.py        # SQLMesh integration: dagster-sqlmesh assets with custom translator
 │   │   ├── resources/
 │   │   │   ├── lakehouse.py        # SeaweedFS S3 client (extends dagster-aws S3Resource)
 │   │   │   └── warehouse.py        # ClickHouse client (extends dagster-clickhouse)
@@ -112,6 +113,16 @@ os-data-platform/
 │   │           └── create_raw_table.sql  # Jinja2 template for ClickHouse S3 engine tables
 │   ├── docker-compose.yml          # Local dev environment
 │   ├── Dockerfile
+│   └── pyproject.toml
+│
+├── transform/                      # SQLMesh project (transformation layer)
+│   ├── config.yaml                 # SQLMesh config: ClickHouse connection + Postgres state
+│   ├── models/
+│   │   └── cleansed/               # Cleansed layer SQL models
+│   │       ├── noaa_ghcn_countries.sql
+│   │       ├── noaa_ghcn_states.sql
+│   │       ├── noaa_ghcn_stations.sql
+│   │       └── noaa_ghcn_inventory.sql
 │   └── pyproject.toml
 │
 ├── helm/                           # Helm charts and values for K8s deployment
@@ -176,9 +187,10 @@ s3_config:
       file_format: parquet
 ```
 
-Dagster auto-discovers these configs at startup and generates two assets per table:
+Dagster auto-discovers these configs at startup and generates assets per table:
 - `ingest_{source}_{table}` - copies files from source S3 to SeaweedFS raw bucket
 - `raw_{source}_{table}` - creates a ClickHouse table pointing at the raw files via S3 engine
+- `cleansed_{source}_{table}` - SQLMesh models that transform raw tables into cleansed tables (auto-discovered from `transform/models/`)
 
 ## Design Decisions
 
