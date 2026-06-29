@@ -1,0 +1,9 @@
+[project]
+name = "transform"
+version = "0.1.0"
+description = "Data platform transformation pipelines"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlmesh[clickhouse]>=0.235.4",
+]

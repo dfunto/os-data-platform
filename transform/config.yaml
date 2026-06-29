@@ -1,0 +1,49 @@
+# --- Gateway Connection ---
+gateways:
+  clickhouse:
+    connection:
+      type: clickhouse
+      host: 
+      username: 
+      # concurrent_tasks: 1
+      # register_comments: True
+      # pre_ping: False
+      # pretty_sql: False
+      # schema_differ_overrides: 
+      # catalog_type_overrides: 
+      # password: 
+      # port: 
+      # cluster: 
+      # connect_timeout: 10
+      # send_receive_timeout: 300
+      # query_limit: 0
+      # use_compression: True
+      # compression_method: 
+      # connection_settings: 
+      # http_proxy: 
+      # verify: True
+      # ca_cert: 
+      # client_cert: 
+      # client_cert_key: 
+      # https_proxy: 
+      # server_host_name: 
+      # tls_mode: 
+      # secure: False
+      # connection_pool_options: 
+
+default_gateway: clickhouse
+
+# --- Model Defaults ---
+# https://sqlmesh.readthedocs.io/en/stable/reference/model_configuration/#model-defaults
+
+model_defaults:
+  dialect: clickhouse
+  start: 2026-06-28 # Start date for backfill history
+  cron: '@daily'    # Run models daily at 12am UTC (can override per model)
+
+linter:
+  enabled: true
+  rules:
+    - ambiguousorinvalidcolumn
+    - invalidselectstarexpansion
+    - noambiguousprojections

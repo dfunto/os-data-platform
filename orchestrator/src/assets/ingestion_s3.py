@@ -149,6 +149,10 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
         table: IngestionS3TableConfig,
         warehouse: WarehouseResource
     ) -> bool:
+        launch_time = context.instance.get_run_stats(context.run_id).launch_time
+        if not launch_time:
+            raise ValueError("Could not fetch run launch time")
+
         template_vars = dict(
             source_name=self.config.name,
             table_name=table.name,
@@ -157,9 +161,7 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
             columns=table.columns,
             settings=table.settings,
             full_refresh=table.full_refresh,
-            ingested_at=datetime.fromtimestamp(
-                context.instance.get_run_stats(context.run_id).launch_time  # TODO review this warning
-            ).isoformat(),
+            ingested_at=datetime.fromtimestamp(launch_time).isoformat()
         )
         with warehouse.get_connection() as client:
             statements = (

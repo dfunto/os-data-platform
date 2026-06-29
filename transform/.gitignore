@@ -1,0 +1,11 @@
+# SQLMesh state & cache
+logs/
+
+# Local DuckDB state backend
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets / local config overrides
+.env
+config_local.yaml
