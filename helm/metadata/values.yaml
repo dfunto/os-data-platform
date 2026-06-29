@@ -14,6 +14,8 @@ primary:
         GRANT ALL PRIVILEGES ON DATABASE dagster TO platform;
         CREATE DATABASE airbyte;
         GRANT ALL PRIVILEGES ON DATABASE airbyte TO platform;
+        CREATE DATABASE sqlmesh;
+        GRANT ALL PRIVILEGES ON DATABASE sqlmesh TO platform;
 
 persistence:
   enabled: true
