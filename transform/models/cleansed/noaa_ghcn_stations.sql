@@ -4,13 +4,13 @@ MODEL (
   grain station_id
 );
 SELECT
-    station_id,
+    TRIM(station_id) as station_id,
     CAST(latitude as Decimal(9, 6)) as latitude,
     CAST(longitude as Decimal(9, 6)) as longitude,
     CAST(elevation as Decimal(8, 1)) as elevation,
     TRIM(state) as state_id,
     TRIM(name) as name,
-    gsn_flag,
-    hcn_crn_flag,
-    TRIM(wmo_id) wmo_id
+    TRIM(gsn_flag) as gsn_flag,
+    TRIM(hcn_crn_flag) as hcn_crn_flag,
+    TRIM(wmo_id) as wmo_id
 FROM raw.noaa_ghcn_stations

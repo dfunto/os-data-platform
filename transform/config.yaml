@@ -11,8 +11,8 @@ gateways:
 
     connection:
       type: clickhouse
-      host: {{ env_var('SQLMESH_CLICKHOUSE_HOST', 'localhost') }}
-      port: 8123
+      host: {{ env_var('CLICKHOUSE_ENDPOINT_URL', 'localhost') }}
+      port: {{ env_var('CLICKHOUSE_HTTP_PORT', '8123' ) }}
       pretty_sql: True
       username: ""
       # concurrent_tasks: 1

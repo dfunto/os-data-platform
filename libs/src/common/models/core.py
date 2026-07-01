@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import ClassVar
 
 from pydantic import BaseModel, computed_field, field_validator, model_validator
-from common.models.ingestion import IngestionSourceType, IngestionS3Config
+from common.models.ingestion import IngestionSourceType
+from common.models.ingestion_s3 import IngestionS3Config
+
+
+class SQLTemplate(BaseModel):
+    template: str
+    vars: dict[str, object]
 
 
 class CapabilityConfig(BaseModel, ABC):

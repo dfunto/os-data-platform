@@ -22,17 +22,17 @@ s3_config:
       full_refresh: true
       columns:
         - name: station_id
-          expression: "trim(substring(line, 1, 11))"
+          expression: "substring(line, 1, 11)"
         - name: latitude
-          expression: "trim(substring(line, 13, 8))"
+          expression: "substring(line, 13, 8)"
         - name: longitude
-          expression: "trim(substring(line, 22, 9))"
+          expression: "substring(line, 22, 9)"
         - name: element
-          expression: "trim(substring(line, 32, 4))"
+          expression: "substring(line, 32, 4)"
         - name: first_year
-          expression: "trim(substring(line, 37, 4))"
+          expression: "substring(line, 37, 4)"
         - name: last_year
-          expression: "trim(substring(line, 42, 4))"
+          expression: "substring(line, 42, 4)"
     - name: stations
       description: "List of stations and their metadata (e.g., coordinates)"
       prefix: "ghcnd-stations.txt"
@@ -40,23 +40,23 @@ s3_config:
       full_refresh: true
       columns:
         - name: station_id
-          expression: "trim(substring(line, 1, 11))"
+          expression: "substring(line, 1, 11)"
         - name: latitude
-          expression: "trim(substring(line, 13, 8))"
+          expression: "substring(line, 13, 8)"
         - name: longitude
-          expression: "trim(substring(line, 22, 9))"
+          expression: "substring(line, 22, 9)"
         - name: elevation
-          expression: "trim(substring(line, 32, 6))"
+          expression: "substring(line, 32, 6)"
         - name: state
-          expression: "trim(substring(line, 39, 2))"
+          expression: "substring(line, 39, 2)"
         - name: name
-          expression: "trim(substring(line, 42, 30))"
+          expression: "substring(line, 42, 30)"
         - name: gsn_flag
-          expression: "trim(substring(line, 73, 3))"
+          expression: "substring(line, 73, 3)"
         - name: hcn_crn_flag
-          expression: "trim(substring(line, 77, 3))"
+          expression: "substring(line, 77, 3)"
         - name: wmo_id
-          expression: "trim(substring(line, 81, 5))"
+          expression: "substring(line, 81, 5)"
     - name: states
       description: "List of U.S. state and Canadian Province codes used in stations tables"
       prefix: "ghcnd-states.txt"
@@ -67,3 +67,15 @@ s3_config:
         - name: name
       settings:
         format_regexp: "^(.{2}) (.+)$"
+    - name: observations
+      description: "Daily weather observations"
+      prefix: "parquet/by_year/"
+      file_format: Parquet
+      partitions:
+        - type: time
+          name: "YEAR"
+          start: "2000-01-01"
+          cron: "0 0 1 1 *"
+          format: "%Y"
+      settings:
+        use_hive_partitioning: "1"

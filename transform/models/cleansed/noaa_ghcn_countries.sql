@@ -3,7 +3,6 @@ MODEL (
   kind FULL,
   grain id
 );
-
 SELECT
   TRIM(code) as id,
   TRIM(name) as name
