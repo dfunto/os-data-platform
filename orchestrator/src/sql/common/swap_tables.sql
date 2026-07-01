@@ -1,4 +1,4 @@
 EXCHANGE TABLES
-{{ source_database }}.`{{ source_name }}_{{ table_name }}`
+`{{ source_database }}`.`{{ source_table_name }}`
 AND
-{{ target_database }}.`{{ source_name }}_{{ table_name }}`
+`{{ target_database }}`.`{{ target_table_name }}`

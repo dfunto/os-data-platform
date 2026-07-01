@@ -2,7 +2,7 @@ from enum import Enum
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Discriminator
+from pydantic import BaseModel, Discriminator, model_validator
 
 
 class IngestionSourceType(Enum):
@@ -52,4 +52,17 @@ PartitionDef = Annotated[
 class IngestionTableConfig(BaseModel):
     name: str
     description: str | None = None
+    full_refresh: bool = False
     partitions: list[PartitionDef] | None = None
+
+    @model_validator(mode="after")
+    def validate_incremental_requires_partitions(self):
+        if not self.full_refresh and not self.partitions:
+            raise ValueError(f"Table '{self.name}': incremental load requires partitions")
+        return self
+
+    @property
+    def partition_columns(self) -> list[str]:
+        if not self.partitions:
+            return []
+        return [p.name for p in self.partitions]

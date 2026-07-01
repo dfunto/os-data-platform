@@ -9,7 +9,6 @@ from common.models.ingestion import ClickHouseFileFormat, ColumnDefinition, Inge
 class IngestionS3TableConfig(IngestionTableConfig):
     prefix: str
     file_format: ClickHouseFileFormat
-    full_refresh: bool = False
     columns: list[ColumnDefinition] | None = None
     settings: dict[str, str] | None = None
 

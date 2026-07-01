@@ -99,20 +99,19 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
 
         template_vars = dict(
             source_name=self.config.name,
-            table_name=table.name,
+            table_name=f"{self.config.name}_{table.name}",
+            temp_table_name=f"{self.config.name}_{table.name}_{context.run_id[:8]}",
             prefix=f"{table.get_target_prefix(self.config.name, partition_params)}/**",
             file_format=table.file_format.value,
             columns=table.columns,
             settings=table.settings,
             full_refresh=table.full_refresh,
-            ingested_at=datetime.fromtimestamp(launch_time).isoformat()
+            ingested_at=datetime.fromtimestamp(launch_time).isoformat(),
+            partition_columns=table.partition_columns,
+            partition_values=list(partition_params.values()),
         )
         with warehouse.get_connection() as client:
-            statements = (
-                self._get_full_refresh_statements(template_vars)
-                if table.full_refresh
-                else self._get_incremental_load_statements(template_vars)
-            )
+            statements = self._get_load_statements(template_vars)
             executed = []
             for statement in statements:
                 sql = self.read_sql(
@@ -128,35 +127,29 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
         return True
 
     @staticmethod
-    def _get_full_refresh_statements(template_vars: dict) -> list[SQLTemplate]:
+    def _get_load_statements(template_vars: dict) -> list[SQLTemplate]:
+        swap_vars = {**template_vars,
+                     "source_database": "temp", "source_table_name": template_vars["temp_table_name"],
+                     "target_database": "raw", "target_table_name": template_vars["table_name"]}
         return [
             SQLTemplate(
                 template="ingestion/create_table_from_file.sql",
-                vars={**template_vars, "database": "temp"},
+                vars={**template_vars,
+                      "database": "temp",
+                      "replace": True,
+                      "table_name": template_vars["temp_table_name"]}
             ),
             SQLTemplate(
                 template="common/copy_table.sql",
-                vars={**template_vars, "source_database": "temp", "target_database": "raw", "schema_only": True},
+                vars={**swap_vars, "schema_only": True},
             ),
             SQLTemplate(
-                template="common/swap_tables.sql",
-                vars={**template_vars, "source_database": "temp", "target_database": "raw"},
+                template="common/swap_partitions.sql" if template_vars["partition_values"] else "common/swap_tables.sql",
+                vars=swap_vars,
             ),
             SQLTemplate(
                 template="common/drop_table.sql",
-                vars={**template_vars, "database": "temp"},
-            ),
-        ]
-
-    @staticmethod
-    def _get_incremental_load_statements(template_vars: dict) -> list[SQLTemplate]:
-        return [
-            SQLTemplate(
-                template="ingestion/create_table_from_file.sql",
-                vars={**template_vars, "database": "raw", "schema_only": True},
-            ),
-            SQLTemplate(
-                template="ingestion/insert_from_file.sql",
-                vars={**template_vars, "database": "raw"},
+                vars={"database": "temp",
+                      "table_name": template_vars["temp_table_name"]}
             ),
         ]

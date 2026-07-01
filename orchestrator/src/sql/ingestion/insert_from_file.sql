@@ -1,4 +1,4 @@
-INSERT INTO {{ database }}.`{{ source_name }}_{{ table_name }}`
+INSERT INTO {{ database }}.`{{ table_name }}`
 SELECT
 {% if not columns %}*{% else %}
 {% for col in columns %}

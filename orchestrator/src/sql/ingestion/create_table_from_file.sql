@@ -1,5 +1,13 @@
-CREATE OR REPLACE TABLE {{ database }}.`{{ source_name }}_{{ table_name }}`
+{% if replace %}
+CREATE OR REPLACE TABLE
+{% else %}
+CREATE TABLE IF NOT EXISTS
+{% endif %}
+{{ database }}.`{{ table_name }}`
 ENGINE = MergeTree()
+{% if partition_columns %}
+PARTITION BY ({% for col in partition_columns %}{{ col }}{% if not loop.last %}, {% endif %}{% endfor %})
+{% endif %}
 AS
 SELECT
 {% if not columns %}*{% else %}
