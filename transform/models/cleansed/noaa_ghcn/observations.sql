@@ -4,9 +4,9 @@ MODEL (
     time_column observation_date
   ),
   grain (observation_date, station_id, measure),
+  partitioned_by observation_year,
   physical_properties (
-    partition_by = 'observation_year',
-    order_by = '(observation_date, station_id, measure)'
+    order_by = (observation_date, station_id, measure)
   ),
   tags [noaa_ghcn]
 );
