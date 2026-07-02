@@ -1,8 +1,6 @@
 MODEL (
   name cleansed.noaa_ghcn_observations,
-  kind INCREMENTAL_BY_TIME_RANGE (
-    time_column observation_date
-  ),
+  kind INCREMENTAL_BY_PARTITION,
   grain (observation_date, station_id, measure),
   partitioned_by observation_year,
   physical_properties (
