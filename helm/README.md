@@ -12,6 +12,7 @@ Full Kubernetes deployment runbook for the data platform. All services deploy in
 | `ingestor` | `airbyte-v2/airbyte` | Connector-based ingestion (API/SaaS/CDC) | `ingestor/values.yaml` |
 | `operators` | Custom (wraps `clickhouse-operator-helm`) | ClickHouse Kubernetes operator CRDs | `operators/values.yaml` |
 | `warehouse` | Custom | ClickHouse cluster + Keeper + init jobs | `warehouse/values.yaml` |
+| `reporting` | `superset/superset` | BI dashboards (Apache Superset) | `reporting/values.yaml` |
 
 ## Architecture on K8s
 
@@ -47,6 +48,12 @@ graph LR
             CH["clickhouse-cluster<br/><i>S3 engine → SeaweedFS</i>"]
             CH_keep["clickhouse-keeper"]
         end
+
+        subgraph rpt["reporting"]
+            SS["superset<br/><i>:8088</i>"]
+            SS_redis["superset-redis"]
+            SS_worker["superset-worker"]
+        end
     end
 
     D_code --> SW_s3
@@ -58,6 +65,9 @@ graph LR
     A_srv -.-> PG
     CH_op --> CH
     CH --> SW_s3
+    SS --> CH
+    SS -.-> PG
+    SS_worker --> SS_redis
 ```
 
 ## Prerequisites
@@ -75,6 +85,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add dagster https://dagster-io.github.io/helm
 helm repo add airbyte-v2 "git+https://github.com/airbytehq/airbyte-platform@charts/v2?ref=v2.0.0"
 helm repo add seaweedfs https://seaweedfs.github.io/seaweedfs/helm
+helm repo add superset https://apache.github.io/superset
 helm repo update
 ```
 
@@ -178,6 +189,9 @@ kubectl port-forward svc/ingestor-airbyte-webapp-svc 3001:80 -n os-data-platform
 
 # SeaweedFS master (http://localhost:9333)
 kubectl port-forward svc/storage-seaweedfs-master 9333:9333 -n os-data-platform
+
+# Superset (http://localhost:8088)
+kubectl port-forward svc/reporting-superset 8088:8088 -n os-data-platform
 ```
 
 ## Chart Details
@@ -209,6 +223,10 @@ Custom chart deploying:
 - **KeeperCluster** CR - 1 replica for coordination
 - **Init Job** - Helm post-install hook that runs `CREATE DATABASE IF NOT EXISTS raw/cleansed/curated`
 - **ConfigMap** - S3 named collection XML pointing ClickHouse at SeaweedFS endpoint
+
+### reporting (Superset)
+
+Uses official `superset/superset` chart. Disables bundled PostgreSQL (uses shared metadata DB). Bundles Redis for Celery broker/caching. Installs `clickhouse-connect` and `psycopg2-binary` via bootstrap script into `/tmp/extra-packages`. DB URI and secret key injected from `reporting-superset-secret`. Default admin: `admin` / `admin`.
 
 ## Downloading Charts Locally (Optional)
 

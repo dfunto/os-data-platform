@@ -30,6 +30,10 @@ graph TB
             Airbyte["Airbyte<br/><i>ingestor</i>"]
         end
 
+        subgraph Reporting
+            Superset["Apache Superset<br/><i>reporting</i><br/>dashboards / SQL editor"]
+        end
+
         subgraph Metadata
             Postgres["PostgreSQL<br/><i>metadata</i>"]
         end
@@ -47,8 +51,10 @@ graph TB
     SeaweedFS -- "S3 engine<br/>(reads in-place)" --> ClickHouse
     Dagster -- "dagster-sqlmesh" --> SQLMesh
     SQLMesh -- "raw → cleansed<br/>(SQL)" --> ClickHouse
+    Superset -- "Queries" --> ClickHouse
     Postgres -. "metadata" .-> Dagster
     Postgres -. "metadata" .-> Airbyte
+    Postgres -. "metadata" .-> Superset
     Postgres -. "state" .-> SQLMesh
 ```
 
@@ -77,7 +83,8 @@ graph TB
 | Warehouse | [ClickHouse](https://clickhouse.com) | Columnar OLAP database with S3 engine |
 | Object Storage | [SeaweedFS](https://github.com/seaweedfs/seaweedfs) | S3-compatible distributed storage (lakehouse) |
 | Ingestion | [Airbyte](https://airbyte.com) | Connectors for API/SaaS/CDC sources |
-| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster, Airbyte, and SQLMesh |
+| Reporting | [Apache Superset](https://superset.apache.org) | BI dashboards, SQL editor, chart explorer |
+| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster, Airbyte, SQLMesh, and Superset |
 | Deployment | [Kubernetes](https://kubernetes.io) + [Helm](https://helm.sh) | Container orchestration and declarative deployment |
 | Shared Library | Python / [Pydantic](https://docs.pydantic.dev) | Config models, validation, K8s secret loading |
 
@@ -132,6 +139,7 @@ os-data-platform/
 │   ├── ingestor/values.yaml        # Airbyte v2 (community)
 │   ├── operators/                  # ClickHouse operator
 │   ├── warehouse/                  # ClickHouse cluster (custom chart)
+│   ├── reporting/values.yaml       # Apache Superset
 │   └── README.md                   # Full deployment runbook
 │
 ├── CLAUDE.md                       # AI assistant context
