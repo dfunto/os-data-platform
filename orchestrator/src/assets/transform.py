@@ -39,6 +39,7 @@ def build_transform_assets():
     @sqlmesh_assets(
         environment="prod",
         config=sqlmesh_config,
+        enabled_subsetting=True
     )
     def transform_assets(
         context: dg.AssetExecutionContext,

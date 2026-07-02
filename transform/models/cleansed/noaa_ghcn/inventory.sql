@@ -1,7 +1,8 @@
 MODEL (
   name cleansed.noaa_ghcn_inventory,
   kind FULL,
-  grain id
+  grain id,
+  tags [noaa_ghcn]
 );
 SELECT
     TRIM(station_id) as station_id,

@@ -1,7 +1,8 @@
 MODEL (
   name cleansed.noaa_ghcn_states,
   kind FULL,
-  grain id
+  grain id,
+  tags [noaa_ghcn]
 );
 SELECT
     TRIM(code) as id,

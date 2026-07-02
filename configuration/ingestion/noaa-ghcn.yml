@@ -74,7 +74,7 @@ s3_config:
       partitions:
         - type: time
           name: "YEAR"
-          start: "2000-01-01"
+          start: "2024-01-01"  # Keep dataset small
           cron: "0 0 1 1 *"
           format: "%Y"
       settings:

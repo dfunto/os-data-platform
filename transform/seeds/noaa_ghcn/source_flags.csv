@@ -1,0 +1,35 @@
+id,description
+0,U.S. Cooperative Summary of the Day
+1,CF6 daily climate summaries from U.S. National Weather Service
+2,Synoptic Summary of the Day version 2
+6,CDMP Cooperative Summary of the Day
+7,U.S. Cooperative Summary of the Day transmitted via WxCoder3
+A,U.S. Automated Surface Observing System real-time data
+a,Australian data from the Australian Bureau of Meteorology
+B,U.S. ASOS data for October 2000 to December 2005
+b,Belarus update
+C,Environment Canada
+D,Short time delay U.S. NWS CF6 daily summaries via High Plains Regional Climate Center
+d,Short time delay U.S. NWS Daily Summary Messages via High Plains Regional Climate Center
+E,European Climate Assessment and Dataset
+F,U.S. Fort data
+f,Data provided courtesy of the Fiji Met Service
+G,Official Global Climate Observing System or other government-supplied data
+H,High Plains Regional Climate Center real-time data
+I,International collection non-U.S. data received through personal contacts
+K,U.S. Cooperative Summary of the Day digitized from paper observer forms
+M,Monthly METAR Extract additional ASOS data
+m,Data from the Mexican National Water Commission
+N,Community Collaborative Rain Hail and Snow
+Q,Data from African countries previously quarantined
+R,NCEI Reference Network Database
+r,All-Russian Research Institute of Hydrometeorological Information
+S,Global Summary of the Day derived from hourly synoptic reports
+s,China Meteorological Administration
+T,SNOwpack TELemtry data from U.S. NRCS
+U,Remote Automatic Weather Station data from Western Regional Climate Center
+u,Ukraine update
+W,WBAN/ASOS Summary of the Day from Integrated Surface Data
+X,U.S. First-Order Summary of the Day
+Z,Datzilla official additions or replacements
+z,Uzbekistan update
