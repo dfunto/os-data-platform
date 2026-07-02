@@ -44,13 +44,13 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
         source_name = self.config.name
         partitions_def = self.build_partitions_def(table)
 
-        @dg.asset(name=f"ingest_{source_name}_{table.name}", group_name="ingestion", partitions_def=partitions_def)
+        @dg.asset(name=f"ingest_{source_name}_{table.name}", group_name=self.group_name, partitions_def=partitions_def)
         def ingest_s3(context: dg.AssetExecutionContext, lakehouse: LakehouseResource):
             context.log.info(f"Ingesting source: {source_name} table: {table.name}")
             total = self._copy_s3_table(context, table, lakehouse)
             return {"files": total}
 
-        @dg.asset(name=f"raw_{source_name}_{table.name}", deps=[ingest_s3], group_name="ingestion", partitions_def=partitions_def)
+        @dg.asset(name=f"raw_{source_name}_{table.name}", deps=[ingest_s3], group_name=self.group_name, partitions_def=partitions_def)
         def create_raw_table(context: dg.AssetExecutionContext, warehouse: WarehouseResource):
             context.log.info(f"Creating raw table: {source_name} table: {table.name}")
             result = self._run_sql(context, table, warehouse)

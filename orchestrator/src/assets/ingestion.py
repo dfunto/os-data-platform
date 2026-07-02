@@ -20,6 +20,7 @@ class IngestionAssetBuilder(ABC):
 
     def __init__(self, config: IngestionConfig):
         self.config = config
+        self.group_name = "raw"
 
     @classmethod
     def get_builder(cls, config: IngestionConfig) -> 'IngestionAssetBuilder':
