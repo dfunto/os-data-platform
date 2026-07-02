@@ -1,0 +1,47 @@
+# Apache Superset - Minimal deployment
+# Chart: superset/superset
+# Install: helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
+
+# Use Docker Hub image directly (scarf.sh registry unreliable)
+image:
+  repository: apache/superset
+  tag: 6.1.0
+
+# Disable bundled dependencies
+postgresql:
+  enabled: false
+
+redis:
+  enabled: true
+
+supersetCeleryFlower:
+  enabled: false
+
+# Superset web server + DB connection
+supersetNode:
+  connections:
+    db_host: metadata-postgresql
+    db_port: "5432"
+    db_user: platform
+    db_name: superset
+
+# Install ClickHouse driver at init
+bootstrapScript: |
+  #!/bin/bash
+  pip install --no-cache-dir --target=/tmp/extra-packages clickhouse-connect psycopg2-binary
+  export PYTHONPATH="/tmp/extra-packages:${PYTHONPATH}"
+
+# Superset config overrides
+configOverrides:
+  secret: |
+    SECRET_KEY = os.environ['SUPERSET_SECRET_KEY']
+    SQLALCHEMY_DATABASE_URI = os.environ['SUPERSET_DATABASE_URI']
+
+# Add extra packages to Python path and credentials
+extraEnv:
+  - name: PYTHONPATH
+    value: "/tmp/extra-packages"
+
+# Credentials from secret
+envFromSecrets:
+  - reporting-superset-secret

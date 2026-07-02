@@ -131,6 +131,11 @@ kubectl label secret orchestrator-postgresql-secret \
 kubectl create secret generic ingestor-postgresql-secret \
     --from-literal=DATABASE_USER=platform \
     --from-literal=DATABASE_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
+
+# Reporting (Superset)
+kubectl create secret generic reporting-superset-secret \
+    --from-literal=SUPERSET_SECRET_KEY=$(openssl rand -base64 42) \
+    --from-literal=SUPERSET_DATABASE_URI=postgresql+psycopg2://platform:$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD@metadata-postgresql:5432/superset
 ```
 
 ## 4. Deploy Services
@@ -157,6 +162,9 @@ helm install operators ./helm/operators -n os-data-platform
 # 6. Warehouse
 helm dependency update helm/warehouse
 helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform
+
+# 7. Reporting
+helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
 ```
 
 ## 5. Access UIs
