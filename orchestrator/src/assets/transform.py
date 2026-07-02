@@ -30,12 +30,12 @@ class CustomSQLMeshContextConfig(SQLMeshContextConfig):
         return CustomTranslator()
 
 
-sqlmesh_config = CustomSQLMeshContextConfig(
-    path=TRANSFORM_PATH,
-    gateway="clickhouse",
-)
-
 def build_transform_assets():
+    sqlmesh_config = CustomSQLMeshContextConfig(
+        path=TRANSFORM_PATH,
+        gateway="clickhouse",
+    )
+
     @sqlmesh_assets(
         environment="prod",
         config=sqlmesh_config,
