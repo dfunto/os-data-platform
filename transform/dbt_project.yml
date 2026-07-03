@@ -21,6 +21,9 @@ models:
     cleansed:
       +schema: cleansed
       +materialized: table
+    curated:
+      +schema: curated
+      +materialized: table
 
 seeds:
   transform:

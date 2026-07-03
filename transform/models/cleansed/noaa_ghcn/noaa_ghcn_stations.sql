@@ -1,5 +1,5 @@
 SELECT
-    TRIM(station_id) as station_id,
+    TRIM(station_id) as id,
     CAST(TRIM(latitude) as Decimal(9, 6)) as latitude,
     CAST(TRIM(longitude) as Decimal(9, 6)) as longitude,
     CAST(TRIM(elevation) as Decimal(8, 1)) as elevation,
