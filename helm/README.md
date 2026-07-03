@@ -98,12 +98,15 @@ kubectl config set-context --current --namespace=os-data-platform
 
 ## 3. Create Secrets
 
-Set credentials as environment variables first:
+Set credentials and environment variables (direnv recommended):
 
 ```shell
 export OS_DATA_PLATFORM_METADATA_DB_ADMIN_PASSWORD=<admin_password>
 export OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=<platform_password>
 export OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD=<seaweedfs_password>
+export OS_DATA_PLATFORM_ENVIRONMENT=dev
+export PULUMI_DISABLE_TELEMETRY=1
+export PULUMI_CONFIG_PASSPHRASE=""
 ```
 
 Then create all required K8s secrets:
@@ -154,27 +157,25 @@ kubectl create secret generic reporting-superset-secret \
 Order matters -- each service depends on the ones above it.
 
 ```shell
-# 1. Metadata database (must be first -- Dagster and Airbyte depend on it)
+# 1. Metadata database
 helm install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data-platform
 
 # 2. Object storage
 helm dependency update helm/storage
 helm install storage ./helm/storage -n os-data-platform
 
-# 3. Orchestrator
-helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
-
-# 4. Ingestor
-helm install ingestor airbyte-v2/airbyte -f helm/ingestor/values.yaml -n os-data-platform
-
-# 5. ClickHouse operator (must be before warehouse)
+# 3. Warehouse
 helm install operators ./helm/operators -n os-data-platform
-
-# 6. Warehouse
 helm dependency update helm/warehouse
 helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform
 
-# 7. Reporting
+# 5. Orchestrator (optional)
+helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
+
+# 6. Ingestor (optional)
+helm install ingestor airbyte-v2/airbyte -f helm/ingestor/values.yaml -n os-data-platform
+
+# 5. Reporting (optional)
 helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
 ```
 

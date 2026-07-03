@@ -40,7 +40,7 @@ graph TB
     end
 
     subgraph Transform
-        SQLMesh["SQLMesh<br/><i>transform</i><br/>cleansed / curated models"]
+        dbt["dbt<br/><i>transform</i><br/>cleansed / curated models"]
     end
 
     S3 -- "S3 copy<br/>(Dagster asset)" --> SeaweedFS
@@ -49,13 +49,12 @@ graph TB
     Dagster -- "Copies files" --> SeaweedFS
     Dagster -- "CREATE TABLE<br/>(SQL)" --> ClickHouse
     SeaweedFS -- "S3 engine<br/>(reads in-place)" --> ClickHouse
-    Dagster -- "dagster-sqlmesh" --> SQLMesh
-    SQLMesh -- "raw → cleansed<br/>(SQL)" --> ClickHouse
+    Dagster -- "dagster-dbt" --> dbt
+    dbt -- "raw → cleansed<br/>(SQL)" --> ClickHouse
     Superset -- "Queries" --> ClickHouse
     Postgres -. "metadata" .-> Dagster
     Postgres -. "metadata" .-> Airbyte
     Postgres -. "metadata" .-> Superset
-    Postgres -. "state" .-> SQLMesh
 ```
 
 ### Data Flow
@@ -64,7 +63,7 @@ graph TB
    - **File sources (S3)**: Dagster copies files byte-for-byte from source S3 buckets into SeaweedFS `lakehouse-raw` bucket
    - **API/SaaS/CDC sources**: Airbyte connectors handle auth, pagination, rate limiting and land data in the raw layer
 2. **Raw table creation** - Dagster creates ClickHouse tables using the S3 engine, pointing directly at raw parquet files in SeaweedFS
-3. **Transformation** - SQLMesh models (orchestrated by Dagster via `dagster-sqlmesh`) transform data through `raw` -> `cleansed` -> `curated` databases in ClickHouse
+3. **Transformation** - dbt models (orchestrated by Dagster via `dagster-dbt`) transform data through `raw` -> `cleansed` -> `curated` databases in ClickHouse
 
 ### Lakehouse Layers
 
@@ -79,12 +78,12 @@ graph TB
 | Component | Tool | Purpose |
 |-----------|------|---------|
 | Orchestration | [Dagster](https://dagster.io) | Pipeline scheduling, asset management, observability |
-| Transformation | [SQLMesh](https://sqlmesh.com) | SQL-based data transformations with virtual environments |
+| Transformation | [dbt](https://www.getdbt.com) | SQL-based data transformations (ClickHouse adapter) |
 | Warehouse | [ClickHouse](https://clickhouse.com) | Columnar OLAP database with S3 engine |
 | Object Storage | [SeaweedFS](https://github.com/seaweedfs/seaweedfs) | S3-compatible distributed storage (lakehouse) |
 | Ingestion | [Airbyte](https://airbyte.com) | Connectors for API/SaaS/CDC sources |
 | Reporting | [Apache Superset](https://superset.apache.org) | BI dashboards, SQL editor, chart explorer |
-| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster, Airbyte, SQLMesh, and Superset |
+| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster, Airbyte, and Superset |
 | Deployment | [Kubernetes](https://kubernetes.io) + [Helm](https://helm.sh) | Container orchestration and declarative deployment |
 | Shared Library | Python / [Pydantic](https://docs.pydantic.dev) | Config models, validation, K8s secret loading |
 
@@ -111,7 +110,7 @@ os-data-platform/
 │   │   ├── assets/
 │   │   │   ├── ingestion.py        # Abstract builder + factory (dispatches by source_type)
 │   │   │   ├── ingestion_s3.py     # S3 ingestion: copy to lakehouse + create raw table
-│   │   │   └── transform.py        # SQLMesh integration: dagster-sqlmesh assets with custom translator
+│   │   │   └── transform.py        # dbt integration: dagster-dbt assets with custom translator
 │   │   ├── resources/
 │   │   │   ├── lakehouse.py        # SeaweedFS S3 client (extends dagster-aws S3Resource)
 │   │   │   └── warehouse.py        # ClickHouse client (extends dagster-clickhouse)
@@ -122,14 +121,14 @@ os-data-platform/
 │   ├── Dockerfile
 │   └── pyproject.toml
 │
-├── transform/                      # SQLMesh project (transformation layer)
-│   ├── config.yaml                 # SQLMesh config: ClickHouse connection + Postgres state
+├── transform/                      # dbt project (transformation layer)
+│   ├── dbt_project.yml             # dbt config: cleansed -> table, seeds -> raw schema
+│   ├── profiles.yml                # ClickHouse connection (env-var driven)
+│   ├── macros/                     # generate_schema_name (raw/cleansed verbatim)
 │   ├── models/
-│   │   └── cleansed/               # Cleansed layer SQL models
-│   │       ├── noaa_ghcn_countries.sql
-│   │       ├── noaa_ghcn_states.sql
-│   │       ├── noaa_ghcn_stations.sql
-│   │       └── noaa_ghcn_inventory.sql
+│   │   ├── sources.yml             # raw.* external tables from ingestion
+│   │   └── cleansed/noaa_ghcn/     # Cleansed models (table / view / incremental)
+│   ├── seeds/                      # Flag lookup CSVs -> raw schema
 │   └── pyproject.toml
 │
 ├── helm/                           # Helm charts and values for K8s deployment
@@ -155,7 +154,13 @@ os-data-platform/
 - Docker + Docker Compose (local dev)
 - Kubernetes cluster + Helm (production)
 
+### Kubernetes Deployment
+
+See [helm/README.md](helm/README.md) for the full deployment runbook including secrets setup and install order.
+
 ### Local Development
+
+You need the kubernetes deployments done in order to run any data pipelines
 
 ```shell
 cd orchestrator
@@ -171,10 +176,6 @@ docker-compose exec user_code dagster definitions validate -m src.definitions
 # Materialize a specific asset
 docker-compose exec user_code dagster asset materialize --select ingest_source1_table1 -m src.definitions
 ```
-
-### Kubernetes Deployment
-
-See [helm/README.md](helm/README.md) for the full deployment runbook including secrets setup and install order.
 
 ## Configuration
 
@@ -198,7 +199,7 @@ s3_config:
 Dagster auto-discovers these configs at startup and generates assets per table:
 - `ingest_{source}_{table}` - copies files from source S3 to SeaweedFS raw bucket
 - `raw_{source}_{table}` - creates a ClickHouse table pointing at the raw files via S3 engine
-- `cleansed_{source}_{table}` - SQLMesh models that transform raw tables into cleansed tables (auto-discovered from `transform/models/`)
+- `cleansed_{source}_{table}` - dbt models that transform raw tables into cleansed tables (auto-discovered from `transform/models/`)
 
 ## Design Decisions
 

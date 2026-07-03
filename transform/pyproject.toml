@@ -1,10 +1,10 @@
 [project]
 name = "transform"
 version = "0.1.0"
-description = "Data platform transformation pipelines"
+description = "Data platform transformation pipelines (dbt / ClickHouse)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "psycopg2-binary==2.9.12",
-    "sqlmesh[clickhouse]==0.235.4",
+    "dbt-core==1.9.4",
+    "dbt-clickhouse==1.9.2",
 ]

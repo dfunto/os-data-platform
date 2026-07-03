@@ -29,27 +29,31 @@ orchestrator/                           # Dagster user code
     assets/
       ingestion.py                      # IngestionAssetBuilder (ABC) + factory get_builder()
       ingestion_s3.py                   # S3IngestionAssetBuilder: copies S3 files to SeaweedFS lakehouse
-      transform.py                      # SQLMesh integration: dagster-sqlmesh assets with custom translator
+      transform.py                      # dbt integration: dagster-dbt assets with custom translator
     resources/
       lakehouse.py                      # LakehouseResource (extends S3Resource): boto3 client to SeaweedFS
       warehouse.py                      # WarehouseResource: ClickHouse connection
   docker-compose.yml                    # Local dev: postgres, user_code, webserver, daemon
   dagster.yaml                          # Dagster instance config (postgres storage)
   workspace.yaml                        # gRPC server: host=user_code, port=3030
-  pyproject.toml                        # Deps: dagster, dagster-sqlmesh, sqlmesh[clickhouse], common (path=../libs)
-  Dockerfile
+  pyproject.toml                        # Deps: dagster, dagster-dbt, dbt-clickhouse, common (path=../libs)
+  Dockerfile                            # Builds dbt manifest via `dbt parse` at image build
   .env                                  # Local env vars (not committed secrets)
   .python-version                       # Python >= 3.12
 
-transform/                              # SQLMesh project (transformation layer)
-  config.yaml                           # SQLMesh config: ClickHouse connection + Postgres state backend
+transform/                              # dbt project (transformation layer)
+  dbt_project.yml                       # dbt project config: cleansed models -> table, seeds -> raw schema
+  profiles.yml                          # ClickHouse connection (env-var driven), no state backend
+  macros/
+    generate_schema_name.sql            # Use schema (raw/cleansed) verbatim, no target prefix
   models/
-    cleansed/                           # Cleansed layer models (FULL kind, reading from raw.*)
-      noaa_ghcn_countries.sql
-      noaa_ghcn_states.sql
-      noaa_ghcn_stations.sql
-      noaa_ghcn_inventory.sql
-  pyproject.toml                        # Deps: sqlmesh[clickhouse], psycopg2-binary
+    sources.yml                         # raw.* external tables produced by ingestion
+    cleansed/noaa_ghcn/                 # Cleansed models (table / view / incremental)
+      noaa_ghcn_countries.sql           #   table (FULL)
+      noaa_ghcn_observations.sql        #   incremental, insert_overwrite by observation_year
+      ...
+  seeds/noaa_ghcn/                      # Flag lookup CSVs -> raw schema
+  pyproject.toml                        # Deps: dbt-core, dbt-clickhouse
   .python-version                       # Python >= 3.12
 
 helm/                                   # Helm charts and values for K8s
@@ -72,7 +76,7 @@ The platform defines three asset groups forming a lineage:
 
 1. **Ingestion** (`ingest_*` assets) — copies files from source S3 buckets into SeaweedFS lakehouse
 2. **Raw** (`raw_*` assets) — creates ClickHouse tables from ingested files
-3. **Cleansed** (`cleansed_*` assets) — SQLMesh models that transform raw tables into cleansed tables
+3. **Cleansed** (`cleansed_*` assets) — dbt models that transform raw tables into cleansed tables
 
 ## Orchestrator (Dagster)
 
@@ -81,25 +85,26 @@ The platform defines three asset groups forming a lineage:
 - Entry point: `src/definitions.py` — loads `UserConfig` from `./configuration`, builds ingestion + transform assets
 - Ingestion: `IngestionAssetBuilder.get_builder(config)` dispatches by `source_type` (S3, Airbyte)
 - S3 ingestion: reads from source S3 bucket, copies files to SeaweedFS lakehouse (`lakehouse-raw` bucket)
-- Transform: `dagster-sqlmesh` integration via `build_transform_assets()` in `assets/transform.py`
-  - Custom `SQLMeshDagsterTranslator` flattens FQNs (e.g., `raw.table` -> `raw_table`) to link SQLMesh deps to ingestion assets
-  - Custom `SQLMeshContextConfig` subclass provides the translator
-  - Runs against SQLMesh `prod` environment
+- Transform: `dagster-dbt` integration via `build_transform_assets()` in `assets/transform.py`
+  - Custom `CustomDagsterDbtTranslator` maps dbt nodes to `{schema}_{alias}` asset keys (e.g. `raw.table` source -> `raw_table`) to link dbt deps to ingestion assets
+  - Attaches `AutomationCondition.eager()` per model so cleansed runs only when an upstream materializes
+  - Two `@dbt_assets`: unpartitioned (everything) + yearly-partitioned (`noaa_ghcn_observations`), the latter passing `start_ds`/`end_ds` dbt vars from the partition key
 - Credentials: fetched from K8s secrets at runtime (configured per source in YAML)
 - Dagster served via gRPC on port 3030
 - Docker image: `dadutra2/os-data-platform-orchestrator:latest`
 - Local dev: `docker-compose.yml` (postgres + user_code + webserver + daemon), mounts `../configuration` and `../transform`
 
-## Transform (SQLMesh)
+## Transform (dbt)
 
-- SQLMesh project in `transform/`, requires Python >= 3.12
-- Dialect: ClickHouse
-- Gateway: `clickhouse` (ClickHouse for execution, Postgres for state)
-- Connection hosts configurable via env vars: `SQLMESH_CLICKHOUSE_HOST`, `SQLMESH_POSTGRES_HOST` (default: `localhost`)
-- State DB password via `OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD`
-- Models in `models/cleansed/` read from `raw.*` tables and write to `cleansed.*`
-- Integrated into Dagster via `dagster-sqlmesh` — cleansed assets depend on raw ingestion assets
-- Can run standalone: `sqlmesh plan` / `sqlmesh run` from `transform/` directory
+- dbt project in `transform/`, requires Python >= 3.12
+- Adapter: `dbt-clickhouse` (ClickHouse for execution + storage); dbt is stateless — partition/backfill tracking is owned by Dagster
+- Connection via `profiles.yml`, env-var driven: `CLICKHOUSE_ENDPOINT_URL`, `CLICKHOUSE_HTTP_PORT`, `CLICKHOUSE_PASSWORD`
+- `macros/generate_schema_name.sql` uses the schema (`raw`/`cleansed`) verbatim so keys line up with ingestion
+- Models in `models/cleansed/` read from `raw.*` sources (and seeds) and write to `cleansed.*`:
+  - table (countries/states/stations/inventory), view (flag lookups over seeds), incremental `insert_overwrite` partitioned by `observation_year` (observations)
+- Seeds (`seeds/noaa_ghcn/*.csv`) load flag lookups into the `raw` schema
+- Integrated into Dagster via `dagster-dbt` — cleansed assets depend on raw ingestion assets
+- Can run standalone from `transform/`: `dbt seed`, `dbt run`, `dbt build` (observations needs `--vars '{start_ds, end_ds}'`)
 
 ## Helm / K8s Deployment
 

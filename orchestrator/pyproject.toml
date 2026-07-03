@@ -12,9 +12,10 @@ dependencies = [
     "dagster-postgres==0.29.9",
     "dagster-webserver==1.13.9",
     "dagster-clickhouse==0.29.9",
-    "dagster-sqlmesh==0.22.0",
+    "dagster-dbt==0.29.9",
+    "dbt-core==1.9.4",
+    "dbt-clickhouse==1.9.2",
     "psycopg2-binary==2.9.12",
-    "sqlmesh[clickhouse]==0.235.4",
     "sqlparse==0.5.5",
 ]
 

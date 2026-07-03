@@ -9,6 +9,9 @@ x-dagster-image: &dagster_image
   environment:
     - SEAWEEDFS_S3_SECRET_ACCESS_KEY=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
     - OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
+    - CLICKHOUSE_ENDPOINT_URL=${CLICKHOUSE_ENDPOINT_URL:-host.docker.internal}
+    - CLICKHOUSE_HTTP_PORT=${CLICKHOUSE_HTTP_PORT:-8123}
+    - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
 
 services:
   postgres:
@@ -25,7 +28,11 @@ services:
 
   user_code:
     <<: *dagster_image
-    command: dagster code-server start -h 0.0.0.0 -p 3030 -f src/definitions.py
+    # Rebuild the dbt manifest from the mounted project (the ../transform bind
+    # shadows the image-baked manifest), then start the gRPC code server.
+    command: >
+      sh -c "dbt parse --project-dir /transform --profiles-dir /transform &&
+             exec dagster code-server start -h 0.0.0.0 -p 3030 -f src/definitions.py"
     container_name: dagster-user-code
     volumes:
       - ./dagster.yaml:/dagster/dagster.yaml

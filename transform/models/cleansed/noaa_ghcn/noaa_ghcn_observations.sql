@@ -1,13 +1,11 @@
-MODEL (
-  name cleansed.noaa_ghcn_observations,
-  kind INCREMENTAL_BY_PARTITION,
-  grain (observation_date, station_id, measure),
-  partitioned_by observation_year,
-  physical_properties (
-    order_by = (observation_date, station_id, measure)
-  ),
-  tags [noaa_ghcn]
-);
+{{
+  config(
+    materialized='incremental',
+    incremental_strategy='insert_overwrite',
+    partition_by='observation_year',
+    order_by=['observation_date', 'station_id', 'measure']
+  )
+}}
 SELECT
   `YEAR` as observation_year,
   CAST(ID as String) as station_id,
@@ -24,4 +22,7 @@ SELECT
   Q_FLAG as quality_flag,
   S_FLAG as source_flag,
   CAST(ELEMENT AS String) as measure
-FROM "raw"."noaa_ghcn_observations"
+FROM {{ source('raw', 'noaa_ghcn_observations') }}
+{% if is_incremental() %}
+WHERE `YEAR` BETWEEN toYear(toDate('{{ var("start_ds") }}')) AND toYear(toDate('{{ var("end_ds") }}'))
+{% endif %}

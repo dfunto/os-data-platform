@@ -1,0 +1,27 @@
+name: transform
+version: 0.1.0
+config-version: 2
+
+profile: transform
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+target-path: target
+clean-targets:
+  - target
+  - dbt_packages
+
+# Dialect / engine: ClickHouse (execution + storage).
+# Schema is used as-is (raw / cleansed) via macros/generate_schema_name.sql.
+models:
+  transform:
+    cleansed:
+      +schema: cleansed
+      +materialized: table
+
+seeds:
+  transform:
+    +schema: raw

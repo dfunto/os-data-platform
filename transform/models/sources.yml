@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Raw tables produced by the ingestion pipeline (Dagster ingestion assets).
+    tables:
+      - name: noaa_ghcn_countries
+      - name: noaa_ghcn_states
+      - name: noaa_ghcn_stations
+      - name: noaa_ghcn_inventory
+      - name: noaa_ghcn_observations

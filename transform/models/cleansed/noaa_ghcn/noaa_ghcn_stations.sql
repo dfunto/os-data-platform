@@ -1,9 +1,3 @@
-MODEL (
-  name cleansed.noaa_ghcn_stations,
-  kind FULL,
-  grain station_id,
-  tags [noaa_ghcn]
-);
 SELECT
     TRIM(station_id) as station_id,
     CAST(TRIM(latitude) as Decimal(9, 6)) as latitude,
@@ -15,4 +9,4 @@ SELECT
     TRIM(gsn_flag) as gsn_flag,
     TRIM(hcn_crn_flag) as hcn_crn_flag,
     TRIM(wmo_id) as wmo_id
-FROM raw.noaa_ghcn_stations
+FROM {{ source('raw', 'noaa_ghcn_stations') }}

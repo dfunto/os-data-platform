@@ -1,0 +1,16 @@
+# ClickHouse connection, env-var driven
+transform:
+  target: prod
+  outputs:
+    prod:
+      type: clickhouse
+      driver: http
+      host: "{{ env_var('CLICKHOUSE_ENDPOINT_URL', 'localhost') }}"
+      port: "{{ env_var('CLICKHOUSE_HTTP_PORT', '8123') | int }}"
+      user: default
+      password: "{{ env_var('CLICKHOUSE_PASSWORD', '') }}"
+      schema: default
+      secure: false
+      verify: false
+      connect_timeout: 10
+      send_receive_timeout: 300

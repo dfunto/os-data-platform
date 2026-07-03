@@ -1,0 +1,18 @@
+version: 2
+
+seeds:
+  - name: noaa_ghcn_measurement_flags
+    config:
+      column_types:
+        id: String
+        description: String
+  - name: noaa_ghcn_quality_flags
+    config:
+      column_types:
+        id: String
+        description: String
+  - name: noaa_ghcn_source_flags
+    config:
+      column_types:
+        id: String
+        description: String
