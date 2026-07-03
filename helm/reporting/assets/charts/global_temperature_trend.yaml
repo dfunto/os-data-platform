@@ -1,0 +1,60 @@
+slice_name: Global Temperature Trend
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_line
+params:
+  datasource: 3__table
+  viz_type: echarts_timeseries_line
+  x_axis: observation_year
+  xAxisForceCategorical: true
+  x_axis_sort_asc: true
+  x_axis_sort_series: name
+  x_axis_sort_series_ascending: true
+  metrics:
+  - aggregate: AVG
+    column:
+      column_name: avg_tmax_celsius
+      type: column
+      filterable: true
+      groupby: true
+      is_dttm: false
+    expressionType: SIMPLE
+    hasCustomLabel: true
+    label: Avg Max Temp (°C)
+    optionName: metric_trend_tmax
+    sqlExpression: null
+  - aggregate: AVG
+    column:
+      column_name: avg_tmin_celsius
+      type: column
+      filterable: true
+      groupby: true
+      is_dttm: false
+    expressionType: SIMPLE
+    hasCustomLabel: true
+    label: Avg Min Temp (°C)
+    optionName: metric_trend_tmin
+    sqlExpression: null
+  groupby: []
+  adhoc_filters: []
+  order_desc: true
+  row_limit: 10000
+  truncate_metric: true
+  show_empty_columns: true
+  comparison_type: values
+  x_axis_time_format: smart_date
+  y_axis_format: '.1f'
+  seriesType: line
+  only_total: true
+  markerEnabled: true
+  show_legend: true
+  legendType: scroll
+  legendOrientation: top
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 80c711e9-67ec-4868-809f-ed8a10af310c
+version: 1.0.0
+dataset_uuid: 21079bb5-a678-487b-b94c-5571fed99b50

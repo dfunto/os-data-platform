@@ -1,0 +1,21 @@
+slice_name: Countries Covered
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 2__table
+  viz_type: big_number_total
+  metric: count
+  adhoc_filters: []
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 84528412-7bf9-4202-b2c5-c7f859745fcb
+version: 1.0.0
+dataset_uuid: c4597537-9096-45b1-8744-f2ea88b39046

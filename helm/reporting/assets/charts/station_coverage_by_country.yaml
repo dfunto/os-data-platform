@@ -1,0 +1,42 @@
+slice_name: Station Coverage by Country
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  datasource: 2__table
+  viz_type: echarts_timeseries_bar
+  x_axis: country_name
+  x_axis_sort: Stations
+  x_axis_sort_asc: false
+  x_axis_sort_series: value
+  x_axis_sort_series_ascending: false
+  metrics:
+  - aggregate: SUM
+    column:
+      column_name: station_count
+      type: column
+      filterable: true
+      groupby: true
+      is_dttm: false
+    expressionType: SIMPLE
+    hasCustomLabel: true
+    label: Stations
+    optionName: metric_coverage
+    sqlExpression: null
+  groupby: []
+  adhoc_filters: []
+  order_desc: true
+  row_limit: 1000
+  truncate_metric: true
+  y_axis_format: SMART_NUMBER
+  show_legend: false
+  legendType: scroll
+  legendOrientation: top
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 99765f4e-3598-4b40-973f-602ac43cde86
+version: 1.0.0
+dataset_uuid: c4597537-9096-45b1-8744-f2ea88b39046

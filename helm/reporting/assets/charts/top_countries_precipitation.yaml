@@ -1,0 +1,42 @@
+slice_name: Top Countries by Precipitation
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  datasource: 1__table
+  viz_type: echarts_timeseries_bar
+  x_axis: country_name
+  x_axis_sort: Avg Yearly Precip (mm)
+  x_axis_sort_asc: false
+  x_axis_sort_series: value
+  x_axis_sort_series_ascending: false
+  metrics:
+  - aggregate: AVG
+    column:
+      column_name: avg_yearly_precip_mm
+      type: column
+      filterable: true
+      groupby: true
+      is_dttm: false
+    expressionType: SIMPLE
+    hasCustomLabel: true
+    label: Avg Yearly Precip (mm)
+    optionName: metric_precip
+    sqlExpression: null
+  groupby: []
+  adhoc_filters: []
+  order_desc: true
+  row_limit: 1000
+  truncate_metric: true
+  y_axis_format: SMART_NUMBER
+  show_legend: false
+  legendType: scroll
+  legendOrientation: top
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 76eabc5f-1d46-4b58-86fe-70208b3e907b
+version: 1.0.0
+dataset_uuid: 899bba87-a50c-4c7c-bfaa-42c66f256fc5

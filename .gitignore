@@ -6,6 +6,9 @@ orchestrator/data/
 
 # Local Helm charts
 helm/**/charts/
+# but keep Superset dashboard chart assets
+!helm/reporting/assets/charts/
+!helm/reporting/assets/charts/**
 
 # Claude
 .claude
