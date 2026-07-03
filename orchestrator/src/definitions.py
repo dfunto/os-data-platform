@@ -15,7 +15,7 @@ ingestion_assets: list[dg.AssetsDefinition] = [
     for asset in IngestionAssetBuilder.get_builder(config).build()
 ]
 
-transform_assets = build_transform_assets()
+transform_assets = build_transform_assets(user_config.ingestion)
 
 resources: dict[str, dg.ConfigurableResource] = {
     "lakehouse": LakehouseResource(),

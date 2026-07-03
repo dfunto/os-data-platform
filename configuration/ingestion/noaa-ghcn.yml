@@ -15,6 +15,16 @@ s3_config:
         - name: name
       settings:
         format_regexp: "^(.{2}) (.+)$"
+    - name: states
+      description: "List of U.S. state and Canadian Province codes used in stations tables"
+      prefix: "ghcnd-states.txt"
+      file_format: Regexp
+      full_refresh: true
+      columns:
+        - name: code
+        - name: name
+      settings:
+        format_regexp: "^(.{2}) (.+)$"
     - name: inventory
       description: "File listing the periods of record for each station and element"
       prefix: "ghcnd-inventory.txt"
@@ -57,16 +67,6 @@ s3_config:
           expression: "substring(line, 77, 3)"
         - name: wmo_id
           expression: "substring(line, 81, 5)"
-    - name: states
-      description: "List of U.S. state and Canadian Province codes used in stations tables"
-      prefix: "ghcnd-states.txt"
-      file_format: Regexp
-      full_refresh: true
-      columns:
-        - name: code
-        - name: name
-      settings:
-        format_regexp: "^(.{2}) (.+)$"
     - name: observations
       description: "Daily weather observations"
       prefix: "parquet/by_year/"
@@ -75,7 +75,7 @@ s3_config:
         - type: time
           name: "YEAR"
           start: "2024-01-01"  # Keep dataset small
-          cron: "0 0 1 1 *"
+          cron: "0 0 1 1 *"  # one partition per year
           format: "%Y"
       settings:
         use_hive_partitioning: "1"
