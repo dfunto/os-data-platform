@@ -1,0 +1,15 @@
+apiVersion: v2
+name: reporting
+description: Apache Superset reporting layer with assets managed as code
+type: application
+version: 0.1.0
+appVersion: "6.1.0"
+
+# Upstream Superset chart is a dependency; its values are set under the
+# `superset:` key in values.yaml. This wrapper adds the assets ConfigMap
+# (templates/assets-configmap.yaml, built from assets/) so dashboards, charts,
+# datasets and connections live in git and import idempotently at pod startup.
+dependencies:
+  - name: superset
+    version: 0.17.2
+    repository: https://apache.github.io/superset

@@ -1,47 +1,96 @@
-# Apache Superset - Minimal deployment
-# Chart: superset/superset
-# Install: helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
+# Reporting layer (Apache Superset) with assets managed as code.
+#
+# Superset is a chart dependency, so all its values live under the `superset:`
+# key. This chart also renders templates/assets-configmap.yaml from assets/,
+# mounted below and imported by the bootstrapScript.
+#
+# Install / upgrade:
+#   helm dependency build helm/reporting
+#   helm upgrade --install reporting helm/reporting -n os-data-platform --create-namespace
+#
+# Refresh assets from a running instance: helm/reporting/scripts/export_assets.sh
 
-# Use Docker Hub image directly (scarf.sh registry unreliable)
-image:
-  repository: apache/superset
-  tag: 6.1.0
+superset:
+  # Use Docker Hub image directly (scarf.sh registry unreliable)
+  image:
+    repository: apache/superset
+    tag: 6.1.0
 
-# Disable bundled dependencies
-postgresql:
-  enabled: false
+  # Disable bundled dependencies
+  postgresql:
+    enabled: false
 
-redis:
-  enabled: true
+  redis:
+    enabled: true
 
-supersetCeleryFlower:
-  enabled: false
+  supersetCeleryFlower:
+    enabled: false
 
-# Superset web server + DB connection
-supersetNode:
-  connections:
-    db_host: metadata-postgresql
-    db_port: "5432"
-    db_user: platform
-    db_name: superset
+  # Mount the reporting-assets ConfigMap (rendered from assets/ by this chart)
+  # into every pod. Keys are flat "asset__<dir>__<file>.yaml" files.
+  extraVolumes:
+    - name: reporting-assets
+      configMap:
+        name: reporting-assets
+  extraVolumeMounts:
+    - name: reporting-assets
+      mountPath: /app/assets
+      readOnly: true
 
-# Install ClickHouse driver at init
-bootstrapScript: |
-  #!/bin/bash
-  pip install --no-cache-dir --target=/tmp/extra-packages clickhouse-connect psycopg2-binary
-  export PYTHONPATH="/tmp/extra-packages:${PYTHONPATH}"
+  # Superset web server + DB connection
+  supersetNode:
+    connections:
+      db_host: metadata-postgresql
+      db_port: "5432"
+      db_user: platform
+      db_name: superset
+    # Gate the asset import (see bootstrapScript) to the webserver only. The
+    # bootstrapScript is sourced by webserver, worker and beat pods; without this
+    # they would all run `import-directory` concurrently and race on the metadata
+    # DB. Only supersetNode sets this env, so the import runs exactly once.
+    env:
+      SUPERSET_IMPORT_ASSETS: "1"
 
-# Superset config overrides
-configOverrides:
-  secret: |
-    SECRET_KEY = os.environ['SUPERSET_SECRET_KEY']
-    SQLALCHEMY_DATABASE_URI = os.environ['SUPERSET_DATABASE_URI']
+  # Runs in every pod (webserver/worker/beat) before the main process starts.
+  #   1. Install ClickHouse + Postgres drivers.
+  #   2. On the webserver only, rebuild the asset tree from the mounted ConfigMap
+  #      (/app/assets) and import it idempotently.
+  # ConfigMap keys can't contain "/", so asset paths are flattened as
+  # "asset__<dir>__<file>.yaml"; we decode them back into a directory tree that
+  # `superset import-directory` understands.
+  bootstrapScript: |
+    #!/bin/bash
+    set -e
+    pip install --no-cache-dir --target=/tmp/extra-packages clickhouse-connect psycopg2-binary
+    export PYTHONPATH="/tmp/extra-packages:${PYTHONPATH}"
 
-# Add extra packages to Python path and credentials
-extraEnv:
-  - name: PYTHONPATH
-    value: "/tmp/extra-packages"
+    if [ "${SUPERSET_IMPORT_ASSETS:-0}" = "1" ]; then
+      ASSET_SRC=/app/assets
+      ASSET_DIR=/tmp/superset_assets
+      rm -rf "$ASSET_DIR"
+      for f in "$ASSET_SRC"/asset__*.yaml; do
+        [ -e "$f" ] || continue
+        rel="$(basename "$f" | sed -e 's/^asset__//' -e 's/__/\//g')"
+        mkdir -p "$ASSET_DIR/$(dirname "$rel")"
+        cp "$f" "$ASSET_DIR/$rel"
+      done
+      if [ -d "$ASSET_DIR" ]; then
+        echo "[bootstrap] importing Superset assets from $ASSET_DIR"
+        superset import-directory "$ASSET_DIR" --overwrite --force
+      fi
+    fi
 
-# Credentials from secret
-envFromSecrets:
-  - reporting-superset-secret
+  # Superset config overrides
+  configOverrides:
+    secret: |
+      SECRET_KEY = os.environ['SUPERSET_SECRET_KEY']
+      SQLALCHEMY_DATABASE_URI = os.environ['SUPERSET_DATABASE_URI']
+
+  # Add extra packages to Python path
+  extraEnv:
+    - name: PYTHONPATH
+      value: "/tmp/extra-packages"
+
+  # Credentials from secret
+  envFromSecrets:
+    - reporting-superset-secret

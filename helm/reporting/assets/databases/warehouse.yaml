@@ -1,0 +1,16 @@
+database_name: Warehouse
+sqlalchemy_uri: clickhousedb+connect://warehouse-clickhouse-headless:8123/default
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_csv_upload: false
+extra:
+  allows_virtual_table_explore: true
+impersonate_user: false
+configuration_method: dynamic_form
+uuid: bf62836b-8e80-4616-a2a5-a07c873c5c75
+encrypted_extra: '{}'
+version: 1.0.0

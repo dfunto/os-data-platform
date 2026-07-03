@@ -1,0 +1,19 @@
+{{- /*
+  Superset assets (databases/datasets/charts/dashboards + metadata.yaml) read
+  straight from this chart's assets/ dir via .Files.Glob — no generated values
+  file. ConfigMap keys can't contain "/", so each asset path is flattened to
+  "asset__<dir>__<file>.yaml"; the bootstrapScript decodes it back into a tree
+  for `superset import-directory`.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reporting-assets
+  labels:
+    app.kubernetes.io/name: reporting
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+{{- range $path, $_ := .Files.Glob "assets/**" }}
+  {{ printf "asset__%s" (trimPrefix "assets/" $path | replace "/" "__") }}: |
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
