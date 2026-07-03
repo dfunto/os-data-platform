@@ -1,0 +1,110 @@
+table_name: noaa_ghcn_station_coverage_per_country
+main_dttm_col: null
+currency_code_column: null
+description: null
+default_endpoint: null
+offset: 0
+cache_timeout: null
+catalog: null
+schema: curated
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+folders: null
+uuid: c4597537-9096-45b1-8744-f2ea88b39046
+metrics:
+- metric_name: count
+  verbose_name: COUNT(*)
+  metric_type: count
+  expression: COUNT(*)
+  description: null
+  d3format: null
+  currency: null
+  extra: null
+  warning_text: null
+columns:
+- column_name: country_id
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: country_name
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: station_count
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: UINT64
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: avg_elevation_m
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: NULLABLE(FLOAT64)
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: avg_latitude
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: NULLABLE(FLOAT64)
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: avg_longitude
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: NULLABLE(FLOAT64)
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+version: 1.0.0
+database_uuid: bf62836b-8e80-4616-a2a5-a07c873c5c75

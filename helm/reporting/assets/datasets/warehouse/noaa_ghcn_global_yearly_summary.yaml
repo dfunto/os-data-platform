@@ -1,4 +1,4 @@
-table_name: noaa_ghcn_avg_yearly_observations_per_country
+table_name: noaa_ghcn_global_yearly_summary
 main_dttm_col: null
 currency_code_column: null
 description: null
@@ -16,7 +16,7 @@ extra: null
 normalize_columns: false
 always_filter_main_dttm: false
 folders: null
-uuid: 899bba87-a50c-4c7c-bfaa-42c66f256fc5
+uuid: 21079bb5-a678-487b-b94c-5571fed99b50
 metrics:
 - metric_name: count
   verbose_name: COUNT(*)
@@ -28,11 +28,50 @@ metrics:
   extra: null
   warning_text: null
 columns:
-- column_name: avg_yearly_precip_mm
+- column_name: observation_year
   verbose_name: null
   is_dttm: false
   is_active: true
-  type: NULLABLE(FLOAT64)
+  type: INT64
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: station_count
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: UINT64
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: country_count
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: UINT64
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: observation_count
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: UINT64
   advanced_data_type: null
   groupby: true
   filterable: true
@@ -67,50 +106,11 @@ columns:
   python_date_format: null
   datetime_format: null
   extra: null
-- column_name: station_count
+- column_name: avg_precip_mm
   verbose_name: null
   is_dttm: false
   is_active: true
-  type: UINT64
-  advanced_data_type: null
-  groupby: true
-  filterable: true
-  expression: null
-  description: null
-  python_date_format: null
-  datetime_format: null
-  extra: null
-- column_name: observation_year
-  verbose_name: null
-  is_dttm: false
-  is_active: true
-  type: INT64
-  advanced_data_type: null
-  groupby: true
-  filterable: true
-  expression: null
-  description: null
-  python_date_format: null
-  datetime_format: null
-  extra: null
-- column_name: country_name
-  verbose_name: null
-  is_dttm: false
-  is_active: true
-  type: STRING
-  advanced_data_type: null
-  groupby: true
-  filterable: true
-  expression: null
-  description: null
-  python_date_format: null
-  datetime_format: null
-  extra: null
-- column_name: country_id
-  verbose_name: null
-  is_dttm: false
-  is_active: true
-  type: STRING
+  type: NULLABLE(FLOAT64)
   advanced_data_type: null
   groupby: true
   filterable: true

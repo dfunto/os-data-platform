@@ -7,66 +7,210 @@ certification_details: ''
 published: true
 uuid: 031c5ece-8758-406b-9ba6-be6325c7fccb
 position:
-  CHART-explore-1-1:
-    children: []
-    id: CHART-explore-1-1
-    meta:
-      chartId: 1
-      height: 78
-      sliceName: Countries Average Max Temperature
-      uuid: 056e3722-d4ae-4f03-8dee-09622c5483e8
-      width: 5
-    parents:
-    - ROOT_ID
-    - GRID_ID
-    - ROW-43azwriXFhKjT7DTii6Kt
-    type: CHART
   DASHBOARD_VERSION_KEY: v2
-  GRID_ID:
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
     children:
-    - ROW-43azwriXFhKjT7DTii6Kt
+    - GRID_ID
+  GRID_ID:
+    type: GRID
     id: GRID_ID
     parents:
     - ROOT_ID
-    type: GRID
+    children:
+    - ROW-kpi
+    - ROW-map
+    - ROW-trend
+    - ROW-extremes
   HEADER_ID:
+    type: HEADER
     id: HEADER_ID
     meta:
       text: Global Historical Climatology Network
-    type: HEADER
-  ROOT_ID:
-    children:
-    - GRID_ID
-    id: ROOT_ID
-    type: ROOT
-  ROW-43azwriXFhKjT7DTii6Kt:
-    children:
-    - CHART-explore-1-1
-    id: ROW-43azwriXFhKjT7DTii6Kt
-    meta:
-      background: BACKGROUND_TRANSPARENT
+  ROW-kpi:
+    type: ROW
+    id: ROW-kpi
     parents:
     - ROOT_ID
     - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    children:
+    - CHART-kpi-stations
+    - CHART-kpi-countries
+    - CHART-kpi-obs
+    - CHART-kpi-tmax
+  CHART-kpi-stations:
+    type: CHART
+    id: CHART-kpi-stations
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpi
+    meta:
+      chartId: 100
+      width: 3
+      height: 20
+      sliceName: Total Weather Stations
+      uuid: 9adb70ca-749f-415a-aaeb-7aab7a3abcea
+    children: []
+  CHART-kpi-countries:
+    type: CHART
+    id: CHART-kpi-countries
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpi
+    meta:
+      chartId: 101
+      width: 3
+      height: 20
+      sliceName: Countries Covered
+      uuid: 84528412-7bf9-4202-b2c5-c7f859745fcb
+    children: []
+  CHART-kpi-obs:
+    type: CHART
+    id: CHART-kpi-obs
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpi
+    meta:
+      chartId: 102
+      width: 3
+      height: 20
+      sliceName: Total Observations
+      uuid: 35c6988f-a78f-4ebf-bb6d-dac1a2de6e13
+    children: []
+  CHART-kpi-tmax:
+    type: CHART
+    id: CHART-kpi-tmax
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpi
+    meta:
+      chartId: 103
+      width: 3
+      height: 20
+      sliceName: Global Avg Max Temp (°C)
+      uuid: 9e8c7c5a-d8db-4df6-899d-e605879c8cff
+    children: []
+  ROW-map:
     type: ROW
+    id: ROW-map
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    children:
+    - CHART-map
+  CHART-map:
+    type: CHART
+    id: CHART-map
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-map
+    meta:
+      chartId: 1
+      width: 12
+      height: 60
+      sliceName: Countries Average Max Temperature
+      uuid: 056e3722-d4ae-4f03-8dee-09622c5483e8
+    children: []
+  ROW-trend:
+    type: ROW
+    id: ROW-trend
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    children:
+    - CHART-trend
+    - CHART-precip
+  CHART-trend:
+    type: CHART
+    id: CHART-trend
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-trend
+    meta:
+      chartId: 104
+      width: 6
+      height: 50
+      sliceName: Global Temperature Trend
+      uuid: 80c711e9-67ec-4868-809f-ed8a10af310c
+    children: []
+  CHART-precip:
+    type: CHART
+    id: CHART-precip
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-trend
+    meta:
+      chartId: 105
+      width: 6
+      height: 50
+      sliceName: Top Countries by Precipitation
+      uuid: 76eabc5f-1d46-4b58-86fe-70208b3e907b
+    children: []
+  ROW-extremes:
+    type: ROW
+    id: ROW-extremes
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    children:
+    - CHART-coverage
+    - CHART-snow
+  CHART-coverage:
+    type: CHART
+    id: CHART-coverage
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-extremes
+    meta:
+      chartId: 106
+      width: 6
+      height: 50
+      sliceName: Station Coverage by Country
+      uuid: 99765f4e-3598-4b40-973f-602ac43cde86
+    children: []
+  CHART-snow:
+    type: CHART
+    id: CHART-snow
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-extremes
+    meta:
+      chartId: 107
+      width: 6
+      height: 50
+      sliceName: Snowiest Countries
+      uuid: 6ba4bc40-b516-4144-8334-1299a1ab82d6
+    children: []
 metadata:
   color_scheme_domain: []
   shared_label_colors: []
   map_label_colors: {}
   label_colors: {}
-  chart_configuration:
-    '1':
-      id: 1
-      crossFilters:
-        scope: global
-        chartsInScope: []
+  chart_configuration: {}
   global_chart_configuration:
     scope:
       rootPath:
       - ROOT_ID
       excluded: []
-    chartsInScope:
-    - 1
+    chartsInScope: []
   native_filter_configuration: []
   chart_customization_config: []
   color_scheme: ''

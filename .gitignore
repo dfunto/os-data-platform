@@ -230,3 +230,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# fetched Helm subchart tarballs
+helm/reporting/charts/
