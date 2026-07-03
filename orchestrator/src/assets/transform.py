@@ -62,13 +62,16 @@ def _raw_partitions(
     source table. dbt models inherit their raw parent's partitioning from this
     map, so the ingestion config (configuration/ingestion/*.yml) stays the single
     source of truth."""
-    return {
-        f"raw_{config.name}_{table.name}": partitions_def
-        for config in ingestion_configs
-        if config.s3_config
-        for table in config.s3_config.tables
-        if (partitions_def := IngestionAssetBuilder.build_partitions_def(table))
-    }
+    partitions: dict[str, dg.PartitionsDefinition] = {}
+    for config in ingestion_configs:
+        s3_config = config.s3_config
+        if not s3_config:
+            continue
+        for table in s3_config.tables:
+            partitions_def = IngestionAssetBuilder.build_partitions_def(table)
+            if partitions_def is not None:
+                partitions[f"raw_{config.name}_{table.name}"] = partitions_def
+    return partitions
 
 
 def _partitioned_cleansed_models(
