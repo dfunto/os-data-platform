@@ -111,10 +111,10 @@ docker-compose exec user_code dagster asset materialize --select ingest_source1_
 
 | Variable | Purpose | Default (local) |
 |----------|---------|-----------------|
-| `SEAWEEDFS_ENDPOINT_URL` | SeaweedFS S3 endpoint | `http://host.docker.internal:8333` |
+| `SEAWEEDFS_ENDPOINT_URL` | SeaweedFS S3 endpoint | `http://storage-seaweedfs-s3:8333` |
 | `SEAWEEDFS_S3_ACCESS_KEY_ID` | SeaweedFS access key | `admin` |
 | `SEAWEEDFS_S3_SECRET_ACCESS_KEY` | SeaweedFS secret key | (injected from shell) |
-| `CLICKHOUSE_ENDPOINT_URL` | ClickHouse host | `host.docker.internal` |
+| `CLICKHOUSE_ENDPOINT_URL` | ClickHouse host | `warehouse-clickhouse-headless` |
 | `CLICKHOUSE_PORT` | ClickHouse native port | `9000` |
 | `CLICKHOUSE_USER` | ClickHouse user | `default` |
 | `CLICKHOUSE_PASSWORD` | ClickHouse password | (empty) |

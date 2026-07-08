@@ -9,9 +9,12 @@ x-dagster-image: &dagster_image
   environment:
     - SEAWEEDFS_S3_SECRET_ACCESS_KEY=$OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD
     - OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
-    - CLICKHOUSE_ENDPOINT_URL=${CLICKHOUSE_ENDPOINT_URL:-host.docker.internal}
+    - CLICKHOUSE_ENDPOINT_URL=${CLICKHOUSE_ENDPOINT_URL:-warehouse-clickhouse-headless}
     - CLICKHOUSE_HTTP_PORT=${CLICKHOUSE_HTTP_PORT:-8123}
     - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+  extra_hosts:
+    - "storage-seaweedfs-s3:host-gateway"
+    - "warehouse-clickhouse-headless:host-gateway"
 
 services:
   postgres:
