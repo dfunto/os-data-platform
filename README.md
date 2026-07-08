@@ -4,6 +4,17 @@
 
 An open-source data platform built entirely on Kubernetes using free and open-source software. Designed for teams that want full ownership of their data stack without vendor lock-in.
 
+
+## Roadmap
+
+- Ingest API data
+- Ingest CDC data
+- Ingest realtime data
+- Realtime data transformation
+- Realtime dashboard
+- Machine learning capability
+
+
 ## Architecture
 
 ```mermaid

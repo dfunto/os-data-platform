@@ -1,19 +1,11 @@
-name: source1
+name: example_source
+description: "Example S3 source for testing"
 source_type: "s3"
-config:
-  bucket: bucket_name
-  aws_access_key_id: "secret:os-data-platform/ingestor-source-aws/key"
-  aws_secret_access_key: "secret:os-data-platform/ingestor-source-aws/secret"
-  streams:
-    - name: source1_table1
-      globs:
-        - source1/table1/**
-      format:
-        filetype: parquet
-        decimal_as_float: false
-    - name: source1_table2
-      globs:
-        - source1/table2/**
-      format:
-        filetype: parquet
-        decimal_as_float: false
+s3_config:
+  bucket: example-bucket
+  disable_auth: true
+  tables:
+    - name: example_table
+      prefix: "example/data/"
+      file_format: Parquet
+      full_refresh: true

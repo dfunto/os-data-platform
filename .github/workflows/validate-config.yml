@@ -1,0 +1,47 @@
+name: validate config
+
+on:
+  push:
+    paths:
+      - "configuration/**"
+      - "libs/**"
+  pull_request:
+    paths:
+      - "configuration/**"
+      - "libs/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install common library
+        run: uv pip install --system ./libs
+
+      - name: Validate configs
+        run: |
+          python - <<'EOF'
+          import sys
+          from pathlib import Path
+          from pydantic import ValidationError
+          from common.user_config import UserConfig
+
+          config_dir = Path("configuration")
+          try:
+              configs = UserConfig(config_dir=str(config_dir)).ingestion
+          except ValidationError as e:
+              print(e, file=sys.stderr)
+              sys.exit(1)
+
+          for c in configs:
+              print(f"  ok  {c.source_type.value}  {c.name}")
+          print(f"\n{len(configs)} config(s) valid.")
+          EOF
