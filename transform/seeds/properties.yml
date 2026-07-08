@@ -6,13 +6,28 @@ seeds:
       column_types:
         id: String
         description: String
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
   - name: noaa_ghcn_quality_flags
     config:
       column_types:
         id: String
         description: String
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
   - name: noaa_ghcn_source_flags
     config:
       column_types:
         id: String
         description: String
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique

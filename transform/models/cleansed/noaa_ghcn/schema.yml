@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: noaa_ghcn_countries
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+
+  - name: noaa_ghcn_states
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+
+  - name: noaa_ghcn_stations
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+      - name: country_id
+        tests:
+          - relationships:
+              to: ref('noaa_ghcn_countries')
+              field: id
+
+  - name: noaa_ghcn_inventory
+    columns:
+      - name: station_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('noaa_ghcn_stations')
+              field: id
+      - name: element
+        tests:
+          - not_null
+
+  - name: noaa_ghcn_observations
+    columns:
+      - name: station_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('noaa_ghcn_stations')
+              field: id
+      - name: observation_date
+        tests:
+          - not_null
+      - name: measure
+        tests:
+          - not_null
