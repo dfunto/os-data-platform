@@ -1,0 +1,63 @@
+name: unit tests
+
+on:
+  push:
+    paths:
+      - "libs/**"
+      - "orchestrator/**"
+  pull_request:
+    paths:
+      - "libs/**"
+      - "orchestrator/**"
+
+jobs:
+  libs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: libs
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v5
+
+      - run: uv sync --extra dev
+
+      - name: Run tests
+        run: uv run python -m pytest --cov=src/common --cov-report=term-missing
+
+      - name: Coverage summary
+        run: |
+          echo "## libs" >> $GITHUB_STEP_SUMMARY
+          uv run python -m coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+
+  orchestrator:
+    needs: libs
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: orchestrator
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v5
+
+      - run: uv sync --extra dev
+
+      - name: Run tests
+        run: uv run python -m pytest --cov=src --cov-report=term-missing
+
+      - name: Coverage summary
+        run: |
+          echo "## orchestrator" >> $GITHUB_STEP_SUMMARY
+          uv run python -m coverage report --format=markdown >> $GITHUB_STEP_SUMMARY

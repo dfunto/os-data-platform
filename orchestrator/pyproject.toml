@@ -19,5 +19,14 @@ dependencies = [
     "sqlparse==0.5.5",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
 [tool.uv.sources]
 common = { path = "../libs" }
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+filterwarnings = ["ignore::Warning"]
