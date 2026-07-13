@@ -4,8 +4,6 @@ global:
     instanceAdmin:
       email: "admin@airbyte.io"
       password: "admin"
-  image:
-    tag: "2.0.0"
   database:
     host: "metadata-postgresql"
     port: "5432"
@@ -17,11 +15,11 @@ global:
     type: minio
     secretName: storage-seaweedfs-secret
     bucket:
-      log: os-data-platform-ingestor
-      state: os-data-platform-ingestor
-      workloadOutput: os-data-platform-ingestor
-      auditLogging: os-data-platform-ingestor
-      activityPayload: os-data-platform-ingestor
+      log: airbyte-metadata
+      state: airbyte-metadata
+      workloadOutput: airbyte-metadata
+      auditLogging: airbyte-metadata
+      activityPayload: airbyte-metadata
     minio:
       endpoint: "http://storage-seaweedfs-s3.os-data-platform.svc.cluster.local:8333"
       accessKeyIdSecretKey: "SEAWEEDFS_S3_ACCESS_KEY_ID"
@@ -31,9 +29,6 @@ postgresql:
   enabled: false
 
 minio:
-  enabled: false
-
-connector-builder-server:
   enabled: false
 
 cron:
