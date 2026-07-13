@@ -83,7 +83,7 @@ graph LR
 ```shell
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add dagster https://dagster-io.github.io/helm
-helm repo add airbyte-v2 "git+https://github.com/airbytehq/airbyte-platform@charts/v2?ref=v2.0.0"
+helm repo add airbyte-v2 https://airbytehq.github.io/charts
 helm repo add seaweedfs https://seaweedfs.github.io/seaweedfs/helm
 helm repo add superset https://apache.github.io/superset
 helm repo update
@@ -144,7 +144,9 @@ kubectl label secret orchestrator-postgresql-secret \
 # Ingestor (Airbyte)
 kubectl create secret generic ingestor-postgresql-secret \
     --from-literal=DATABASE_USER=platform \
-    --from-literal=DATABASE_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
+    --from-literal=DATABASE_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD \
+    --from-literal=CONFIG_DATABASE_REPLICA_USER=platform \
+    --from-literal=CONFIG_DATABASE_REPLICA_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
 
 # Reporting (Superset)
 kubectl create secret generic reporting-superset-secret \
@@ -173,7 +175,7 @@ helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data
 helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
 
 # 6. Ingestor (optional)
-helm install ingestor airbyte-v2/airbyte -f helm/ingestor/values.yaml -n os-data-platform
+helm install ingestor airbyte-v2/airbyte --version 2.1.0 -f helm/ingestor/values.yaml -n os-data-platform
 
 # 5. Reporting (optional)
 helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
@@ -181,18 +183,24 @@ helm install reporting superset/superset -f helm/reporting/values.yaml -n os-dat
 
 ## 5. Access UIs
 
+Forward all services to localhost (also accessible from docker-compose containers via `extra_hosts`):
+
 ```shell
-# Dagster (http://localhost:3000)
-kubectl port-forward svc/orchestrator-dagster-webserver 3000:80 -n os-data-platform
+make forward
+```
 
-# Airbyte (http://localhost:3001)
-kubectl port-forward svc/ingestor-airbyte-webapp-svc 3001:80 -n os-data-platform
+| Service | URL |
+|---------|-----|
+| Superset | http://localhost:8088 |
+| Airbyte | http://localhost:8001 |
+| SeaweedFS S3 | http://localhost:8333 |
+| ClickHouse HTTP | http://localhost:8123 |
+| ClickHouse native | localhost:9000 |
 
-# SeaweedFS master (http://localhost:9333)
-kubectl port-forward svc/storage-seaweedfs-master 9333:9333 -n os-data-platform
+Stop all forwards:
 
-# Superset (http://localhost:8088)
-kubectl port-forward svc/reporting-superset 8088:8088 -n os-data-platform
+```shell
+make forward-stop
 ```
 
 ## Chart Details
@@ -232,6 +240,5 @@ Uses official `superset/superset` chart. Disables bundled PostgreSQL (uses share
 ## Downloading Charts Locally (Optional)
 
 ```shell
-helm pull dagster/dagster --version 1.13.5 --untar --untardir ./helm/charts
-helm pull airbyte/airbyte --version 1.7.8 --untar --untardir ./helm/charts
+helm pull {repo} --version {version} --untar --untardir ./helm/charts
 ```

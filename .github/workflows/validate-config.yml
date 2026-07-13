@@ -27,21 +27,4 @@ jobs:
         run: uv pip install --system ./libs
 
       - name: Validate configs
-        run: |
-          python - <<'EOF'
-          import sys
-          from pathlib import Path
-          from pydantic import ValidationError
-          from common.user_config import UserConfig
-
-          config_dir = Path("configuration")
-          try:
-              configs = UserConfig(config_dir=str(config_dir)).ingestion
-          except ValidationError as e:
-              print(e, file=sys.stderr)
-              sys.exit(1)
-
-          for c in configs:
-              print(f"  ok  {c.source_type.value}  {c.name}")
-          print(f"\n{len(configs)} config(s) valid.")
-          EOF
+        run: python .github/scripts/validate_config.py configuration
