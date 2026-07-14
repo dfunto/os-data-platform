@@ -10,5 +10,4 @@ class IngestionApiTableConfig(IngestionTableConfig):
 
 
 class IngestionApiConfig(BaseModel):
-    params: dict[str, str] = {}
     tables: list[IngestionApiTableConfig]

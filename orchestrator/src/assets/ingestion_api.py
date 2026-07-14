@@ -1,3 +1,4 @@
+import tempfile
 from typing import Literal
 
 import requests
@@ -48,19 +49,21 @@ class ApiIngestionAssetBuilder(IngestionAssetBuilder):
 
     def _build_asset(self, table: IngestionApiTableConfig) -> dg.AssetsDefinition:
         source_name = self.config.name
-        api_cfg = self.config.api_config
+        partitions_def = self.build_partitions_def(table)
         write_disposition: Literal["replace", "append"] = (
             "replace" if table.full_refresh else "append"
         )
 
-        @dg.asset(name=f"raw_{source_name}_{table.name}", group_name=self.group_name)
+        @dg.asset(
+            name=f"raw_{source_name}_{table.name}",
+            group_name=self.group_name,
+            partitions_def=partitions_def,
+        )
         def run_api_pipeline(context: dg.AssetExecutionContext, warehouse: WarehouseResource):
-            if table.partitions:
-                raise NotImplementedError(f"Partitioned api tables not yet supported: {table.name}")
-
-            # Request params may reference shared api params via placeholders, e.g.
-            # {"date": "{start_year}:{end_year}"} formatted from api_cfg.params.
-            request_params = {k: v.format(**api_cfg.params) for k, v in table.params.items()}
+            # Request params may reference the run's partition keys via placeholders,
+            # e.g. {"date": "{YEAR}"} formatted from the resolved partition key.
+            partition_params = self.resolve_partition_keys(context, table)
+            request_params = {k: v.format(**partition_params) for k, v in table.params.items()}
 
             @dlt.resource(name=f"{source_name}_{table.name}", primary_key=table.primary_key)
             def _resource():
@@ -73,10 +76,13 @@ class ApiIngestionAssetBuilder(IngestionAssetBuilder):
             destination = dlt.destinations.clickhouse(
                 credentials=credentials, dataset_table_separator=""
             )
+            # Isolate dlt's local state per run so concurrent partition backfills of the
+            # same table don't share (and corrupt) a working dir; state is ephemeral.
             pipeline = dlt.pipeline(
-                pipeline_name=f"{source_name}_{table.name}",
+                pipeline_name=f"{source_name}_{table.name}_{context.run_id[:8]}",
                 destination=destination,
                 dataset_name="",
+                pipelines_dir=tempfile.mkdtemp(),
             )
             info = pipeline.run(_resource(), write_disposition=write_disposition)
             context.log.info(str(info))
