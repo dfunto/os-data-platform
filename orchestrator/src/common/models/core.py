@@ -36,7 +36,6 @@ class IngestionConfig(CapabilityConfig):
     description: str | None = None
     source_type: IngestionSourceType
     s3_config: IngestionS3Config | None = None
-    airbyte_config: dict | None = None
     api_config: IngestionApiConfig | None = None
 
     @field_validator("name")
@@ -50,7 +49,6 @@ class IngestionConfig(CapabilityConfig):
     def validate_config_matches_source(self):
         config_map = {
             IngestionSourceType.S3: "s3_config",
-            IngestionSourceType.AIRBYTE: "airbyte_config",
             IngestionSourceType.API: "api_config",
         }
         field = config_map[self.source_type]

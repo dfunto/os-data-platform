@@ -101,18 +101,16 @@ os-data-platform/
 │   └── ingestion/
 │       └── source1.yml             # Per-source ingestion config
 │
-├── libs/                           # Shared Python library ("common" package)
-│   ├── src/common/
-│   │   ├── models/
-│   │   │   ├── core.py             # IngestionConfig, LakehouseLayer, CapabilityConfig
-│   │   │   └── ingestion.py        # S3-specific models, K8s secret resolution
-│   │   └── user_config.py          # Loads YAML configs by capability type
-│   ├── tests/
-│   └── pyproject.toml
-│
 ├── orchestrator/                   # Dagster user code
 │   ├── src/
 │   │   ├── definitions.py          # Entry point: builds ingestion + transform assets, registers Definitions
+│   │   ├── common/                 # Shared config models + loader ("common" package)
+│   │   │   ├── models/
+│   │   │   │   ├── core.py         # IngestionConfig, LakehouseLayer, CapabilityConfig
+│   │   │   │   ├── ingestion.py    # Source type enum, base table/partition models
+│   │   │   │   ├── ingestion_s3.py # S3 source config, K8s secret resolution
+│   │   │   │   └── ingestion_api.py# API source config (dlt REST ingestion)
+│   │   │   └── user_config.py      # Loads YAML configs by capability type
 │   │   ├── assets/
 │   │   │   ├── ingestion.py        # Abstract builder + factory (dispatches by source_type)
 │   │   │   ├── ingestion_s3.py     # S3 ingestion: copy to lakehouse + create raw table
@@ -124,6 +122,7 @@ os-data-platform/
 │   │   └── sql/
 │   │       └── ingestion/
 │   │           └── create_raw_table.sql  # Jinja2 template for ClickHouse S3 engine tables
+│   ├── tests/                      # Unit tests (models, config loader, asset builders)
 │   ├── docker-compose.yml          # Local dev environment
 │   ├── Dockerfile
 │   └── pyproject.toml

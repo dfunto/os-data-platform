@@ -32,10 +32,6 @@ class TestSourceTypeConfigMismatch:
         with pytest.raises(ValidationError, match="source_type 's3' requires s3_config"):
             IngestionConfig(file_path=tmp_path / "source.yml", name="my_source", source_type="s3")
 
-    def test_airbyte_source_requires_airbyte_config(self, tmp_path):
-        with pytest.raises(ValidationError, match="source_type 'airbyte' requires airbyte_config"):
-            IngestionConfig(file_path=tmp_path / "source.yml", name="my_source", source_type="airbyte")
-
 
 class TestApplicationField:
     def test_application_differs_from_name(self, tmp_path):

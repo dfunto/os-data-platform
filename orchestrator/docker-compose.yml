@@ -2,7 +2,6 @@ x-dagster-image: &dagster_image
   build:
     context: .
     additional_contexts:
-      - libs=../libs
       - transform=../transform
   image: dadutra2/os-data-platform-orchestrator:latest
   env_file: .env

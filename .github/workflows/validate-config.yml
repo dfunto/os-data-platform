@@ -4,11 +4,11 @@ on:
   push:
     paths:
       - "configuration/**"
-      - "libs/**"
+      - "orchestrator/src/common/**"
   pull_request:
     paths:
       - "configuration/**"
-      - "libs/**"
+      - "orchestrator/src/common/**"
 
 jobs:
   validate:
@@ -23,8 +23,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
-      - name: Install common library
-        run: uv pip install --system ./libs
+      - name: Install common deps
+        run: uv pip install --system pydantic pyyaml croniter kubernetes
 
       - name: Validate configs
-        run: python .github/scripts/validate_config.py configuration
+        run: PYTHONPATH=orchestrator/src python .github/scripts/validate_config.py configuration

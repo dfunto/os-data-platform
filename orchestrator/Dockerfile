@@ -13,7 +13,6 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 COPY pyproject.toml README.md ./
 COPY src/ src/
-COPY --from=libs . /libs/
 COPY --from=transform . /transform/
 
 RUN uv pip install --system -e .

@@ -13,30 +13,25 @@ configuration/                          # User-defined YAML configs (mounted int
   ingestion/
     source1.yml                         # Per-source ingestion config (name, source_type, s3_config, tables)
 
-libs/                                   # Shared Python library ("common" package)
-  src/common/
-    __init__.py
-    models.py                           # Pydantic models: IngestionConfig, IngestionS3Config, IngestionS3TableConfig, LakehouseLayer, etc.
-    user_config.py                      # UserConfig class: loads YAML configs from configuration/ dir by capability
-  tests/
-    fixtures/ingestion/example.yml
-    test_config.py
-  pyproject.toml
-
 orchestrator/                           # Dagster user code
   src/
     definitions.py                      # Entry point: loads UserConfig, builds ingestion + transform assets, registers Definitions
+    common/                             # In-tree "common" package (config models + loader)
+      models/                           # Pydantic models: IngestionConfig, IngestionS3Config, IngestionApiConfig, LakehouseLayer, etc.
+      user_config.py                    # UserConfig class: loads YAML configs from configuration/ dir by capability
     assets/
       ingestion.py                      # IngestionAssetBuilder (ABC) + factory get_builder()
       ingestion_s3.py                   # S3IngestionAssetBuilder: copies S3 files to SeaweedFS lakehouse
+      ingestion_api.py                  # ApiIngestionAssetBuilder: dlt REST pipelines -> ClickHouse raw
       transform.py                      # dbt integration: dagster-dbt assets with custom translator
     resources/
       lakehouse.py                      # LakehouseResource (extends S3Resource): boto3 client to SeaweedFS
       warehouse.py                      # WarehouseResource: ClickHouse connection
+  tests/                                # Unit tests (models, config loader, asset builders)
   docker-compose.yml                    # Local dev: postgres, user_code, webserver, daemon
   dagster.yaml                          # Dagster instance config (postgres storage)
   workspace.yaml                        # gRPC server: host=user_code, port=3030
-  pyproject.toml                        # Deps: dagster, dagster-dbt, dbt-clickhouse, common (path=../libs)
+  pyproject.toml                        # Deps: dagster, dagster-dbt, dbt-clickhouse, dlt, pydantic
   Dockerfile                            # Builds dbt manifest via `dbt parse` at image build
   .env                                  # Local env vars (not committed secrets)
   .python-version                       # Python >= 3.12
@@ -81,7 +76,7 @@ The platform defines three asset groups forming a lineage:
 ## Orchestrator (Dagster)
 
 - Python package in `orchestrator/`, requires Python >= 3.12
-- Deps on `common` library via `libs/` (path dependency)
+- `common` package (config models + loader) lives in-tree at `src/common`
 - Entry point: `src/definitions.py` — loads `UserConfig` from `./configuration`, builds ingestion + transform assets
 - Ingestion: `IngestionAssetBuilder.get_builder(config)` dispatches by `source_type` (S3, API)
 - S3 ingestion: reads from source S3 bucket, copies files to SeaweedFS lakehouse (`lakehouse-raw` bucket)

@@ -626,28 +626,6 @@ wheels = [
 ]
 
 [[package]]
-name = "common"
-version = "0.1.0"
-source = { directory = "../libs" }
-dependencies = [
-    { name = "croniter" },
-    { name = "kubernetes" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "croniter" },
-    { name = "kubernetes" },
-    { name = "pydantic", specifier = "==2.11.7" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pyyaml" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "coverage"
 version = "7.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2350,7 +2328,7 @@ name = "orchestrator"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "common" },
+    { name = "croniter" },
     { name = "dagster" },
     { name = "dagster-aws" },
     { name = "dagster-clickhouse" },
@@ -2361,7 +2339,10 @@ dependencies = [
     { name = "dbt-clickhouse" },
     { name = "dbt-core" },
     { name = "dlt", extra = ["clickhouse"] },
+    { name = "kubernetes" },
     { name = "psycopg2-binary" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
     { name = "sqlparse" },
 ]
 
@@ -2373,7 +2354,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "common", directory = "../libs" },
+    { name = "croniter" },
     { name = "dagster", specifier = "==1.13.9" },
     { name = "dagster-aws", specifier = "==0.29.9" },
     { name = "dagster-clickhouse", specifier = "==0.29.9" },
@@ -2384,9 +2365,12 @@ requires-dist = [
     { name = "dbt-clickhouse", specifier = "==1.9.2" },
     { name = "dbt-core", specifier = "==1.9.4" },
     { name = "dlt", extras = ["clickhouse"] },
+    { name = "kubernetes" },
     { name = "psycopg2-binary", specifier = "==2.9.12" },
+    { name = "pydantic", specifier = "==2.11.7" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
+    { name = "pyyaml" },
     { name = "sqlparse", specifier = "==0.5.5" },
 ]
 provides-extras = ["dev"]

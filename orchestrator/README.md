@@ -42,7 +42,7 @@ Located in `src/sql/`. Uses Jinja2 for parameterization. Currently:
 
 ### Credential Handling
 
-Source S3 credentials are resolved at runtime from Kubernetes secrets. The `IngestionS3Config` model (in `libs/`) reads the K8s secret specified in the YAML config and extracts the access key and secret.
+Source S3 credentials are resolved at runtime from Kubernetes secrets. The `IngestionS3Config` model (in `src/common/`) reads the K8s secret specified in the YAML config and extracts the access key and secret.
 
 ## Project Structure
 
@@ -50,20 +50,25 @@ Source S3 credentials are resolved at runtime from Kubernetes secrets. The `Inge
 orchestrator/
 ├── src/
 │   ├── definitions.py              # Dagster entry point
+│   ├── common/                     # Config models + YAML loader ("common" package)
+│   │   ├── models/                 # IngestionConfig, source types, table/partition models
+│   │   └── user_config.py          # Loads YAML configs by capability type
 │   ├── assets/
 │   │   ├── ingestion.py            # IngestionAssetBuilder ABC + factory
-│   │   └── ingestion_s3.py         # S3IngestionAssetBuilder
+│   │   ├── ingestion_s3.py         # S3IngestionAssetBuilder
+│   │   └── ingestion_api.py        # ApiIngestionAssetBuilder (dlt REST)
 │   ├── resources/
 │   │   ├── lakehouse.py            # LakehouseResource (SeaweedFS S3)
 │   │   └── warehouse.py            # WarehouseResource (ClickHouse)
 │   └── sql/
 │       └── ingestion/
 │           └── create_raw_table.sql
+├── tests/                          # Unit tests (models, config loader, asset builders)
 ├── docker-compose.yml              # Local dev (postgres + dagster services)
 ├── dagster.yaml                    # Instance config (postgres storage)
 ├── workspace.yaml                  # gRPC code server config
 ├── Dockerfile                      # python:3.12, installs via uv
-├── pyproject.toml                  # Deps: dagster, dagster-aws, dagster-clickhouse, common
+├── pyproject.toml                  # Deps: dagster, dagster-aws, dagster-clickhouse, dlt, pydantic
 ├── .env                            # Local env vars
 └── .python-version                 # 3.12
 ```
@@ -125,7 +130,9 @@ docker-compose exec user_code dagster asset materialize --select ingest_source1_
 
 ## Dependencies
 
-- `common` - shared library from `../libs` (path dependency via uv)
+- `common` - config models + YAML loader, now an in-tree package under `src/common`
+- `pydantic`, `pyyaml`, `croniter`, `kubernetes` - config validation + K8s secret resolution
+- `dlt[clickhouse]` - API ingestion engine (`api` source type)
 - `dagster`, `dagster-webserver`, `dagster-postgres` - core Dagster
 - `dagster-aws` - S3Resource base class
 - `dagster-clickhouse` - ClickhouseResource base class

@@ -5,7 +5,10 @@ description = "Data Platform orchestrator"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "common",
+    "pydantic==2.11.7",
+    "croniter",
+    "pyyaml",
+    "kubernetes",
     "dagster==1.13.9",
     "dagster-k8s==0.29.9",
     "dagster-aws==0.29.9",
@@ -22,9 +25,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov"]
-
-[tool.uv.sources]
-common = { path = "../libs" }
 
 [tool.pytest.ini_options]
 minversion = "6.0"
