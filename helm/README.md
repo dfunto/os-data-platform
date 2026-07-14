@@ -6,10 +6,9 @@ Full Kubernetes deployment runbook for the data platform. All services deploy in
 
 | Release | Chart | Purpose | Values |
 |---------|-------|---------|--------|
-| `metadata` | `bitnami/postgresql` | Shared PostgreSQL for Dagster + Airbyte metadata | `metadata/values.yaml` |
+| `metadata` | `bitnami/postgresql` | Shared PostgreSQL metadata store (Dagster + Superset) | `metadata/values.yaml` |
 | `storage` | Custom (wraps `seaweedfs`) | S3-compatible object storage (lakehouse) | `storage/values.yaml` |
 | `orchestrator` | `dagster/dagster` v1.13.5 | Pipeline orchestration (webserver + daemon + user code) | `orchestrator/values.yaml` |
-| `ingestor` | `airbyte-v2/airbyte` | Connector-based ingestion (API/SaaS/CDC) | `ingestor/values.yaml` |
 | `operators` | Custom (wraps `clickhouse-operator-helm`) | ClickHouse Kubernetes operator CRDs | `operators/values.yaml` |
 | `warehouse` | Custom | ClickHouse cluster + Keeper + init jobs | `warehouse/values.yaml` |
 | `reporting` | `superset/superset` | BI dashboards (Apache Superset) | `reporting/values.yaml` |
@@ -21,7 +20,7 @@ graph LR
     subgraph ns["os-data-platform namespace"]
         direction TB
         subgraph meta["metadata"]
-            PG["metadata-postgresql<br/><i>dagster DB + airbyte DB</i>"]
+            PG["metadata-postgresql<br/><i>dagster DB + superset DB</i>"]
         end
 
         subgraph stor["storage"]
@@ -35,12 +34,6 @@ graph LR
             D_web["dagster-webserver"]
             D_daemon["dagster-daemon"]
             D_code["dagster-user-code<br/><i>gRPC :3030</i>"]
-        end
-
-        subgraph ing["ingestor"]
-            A_srv["airbyte-server"]
-            A_wrk["airbyte-worker"]
-            A_web["airbyte-webapp"]
         end
 
         subgraph wh["warehouse"]
@@ -58,11 +51,9 @@ graph LR
 
     D_code --> SW_s3
     D_code --> CH
-    A_wrk --> SW_s3
     D_web --> D_code
     D_daemon --> D_code
     D_code -.-> PG
-    A_srv -.-> PG
     CH_op --> CH
     CH --> SW_s3
     SS --> CH
@@ -78,12 +69,9 @@ graph LR
 
 ## 1. Add Helm Repos
 
-> **Note:** Airbyte v2 chart was referenced from GitHub directly because the published v2 chart was not yet released as of Jun 2026. V2 was necessary to disable the bundled MinIO (we use SeaweedFS instead).
-
 ```shell
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add dagster https://dagster-io.github.io/helm
-helm repo add airbyte-v2 https://airbytehq.github.io/charts
 helm repo add seaweedfs https://seaweedfs.github.io/seaweedfs/helm
 helm repo add superset https://apache.github.io/superset
 helm repo update
@@ -105,8 +93,6 @@ export OS_DATA_PLATFORM_METADATA_DB_ADMIN_PASSWORD=<admin_password>
 export OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD=<platform_password>
 export OS_DATA_PLATFORM_STORAGE_ROOT_PASSWORD=<seaweedfs_password>
 export OS_DATA_PLATFORM_ENVIRONMENT=dev
-export PULUMI_DISABLE_TELEMETRY=1
-export PULUMI_CONFIG_PASSPHRASE=""
 ```
 
 Then create all required K8s secrets:
@@ -141,13 +127,6 @@ kubectl annotate secret orchestrator-postgresql-secret \
 kubectl label secret orchestrator-postgresql-secret \
     app.kubernetes.io/managed-by=Helm
 
-# Ingestor (Airbyte)
-kubectl create secret generic ingestor-postgresql-secret \
-    --from-literal=DATABASE_USER=platform \
-    --from-literal=DATABASE_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD \
-    --from-literal=CONFIG_DATABASE_REPLICA_USER=platform \
-    --from-literal=CONFIG_DATABASE_REPLICA_PASSWORD=$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD
-
 # Reporting (Superset)
 kubectl create secret generic reporting-superset-secret \
     --from-literal=SUPERSET_SECRET_KEY=$(openssl rand -base64 42) \
@@ -171,11 +150,8 @@ helm install operators ./helm/operators -n os-data-platform
 helm dependency update helm/warehouse
 helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform
 
-# 5. Orchestrator (optional)
+# 4. Orchestrator (optional)
 helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
-
-# 6. Ingestor (optional)
-helm install ingestor airbyte-v2/airbyte --version 2.1.0 -f helm/ingestor/values.yaml -n os-data-platform
 
 # 5. Reporting (optional)
 helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
@@ -192,7 +168,6 @@ make forward
 | Service | URL |
 |---------|-----|
 | Superset | http://localhost:8088 |
-| Airbyte | http://localhost:8001 |
 | SeaweedFS S3 | http://localhost:8333 |
 | ClickHouse HTTP | http://localhost:8123 |
 | ClickHouse native | localhost:9000 |
@@ -207,19 +182,15 @@ make forward-stop
 
 ### metadata (PostgreSQL)
 
-Uses `bitnami/postgresql`. Creates two databases via init SQL: `dagster` and `airbyte`. Shared `platform` user for both. 8Gi persistent volume.
+Uses `bitnami/postgresql`. Creates databases via init SQL: `dagster` and `superset`. Shared `platform` user. 8Gi persistent volume.
 
 ### storage (SeaweedFS)
 
-Wrapper chart around `seaweedfs` v4.35.0. Runs master, volume, filer, and S3 gateway (port 8333). S3 auth enabled via secret. Auto-creates buckets: `lakehouse-raw` and `os-data-platform-ingestor`.
+Wrapper chart around `seaweedfs` v4.35.0. Runs master, volume, filer, and S3 gateway (port 8333). S3 auth enabled via secret. Auto-creates the `lakehouse-raw` bucket.
 
 ### orchestrator (Dagster)
 
 Uses official `dagster/dagster` v1.13.5 chart. Disables bundled PostgreSQL (uses shared metadata DB). User deployment pulls `dadutra2/os-data-platform-orchestrator:latest`, runs gRPC code server on port 3030. Gets SeaweedFS and DB credentials via K8s secrets.
-
-### ingestor (Airbyte)
-
-Uses Airbyte v2 community chart. Disables bundled PostgreSQL and MinIO. Points at shared metadata DB and SeaweedFS for state/log storage. Default admin: `admin@airbyte.io` / `admin`.
 
 ### operators (ClickHouse Operator)
 

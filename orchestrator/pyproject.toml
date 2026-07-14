@@ -15,6 +15,7 @@ dependencies = [
     "dagster-dbt==0.29.9",
     "dbt-core==1.9.4",
     "dbt-clickhouse==1.9.2",
+    "dlt[clickhouse]",
     "psycopg2-binary==2.9.12",
     "sqlparse==0.5.5",
 ]

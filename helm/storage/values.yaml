@@ -24,9 +24,5 @@ seaweedfs:
     enableAuth: true
     existingConfigSecret: storage-seaweedfs-secret
     createBuckets:
-      - name: airbyte-metadata
-        anonymousRead: false
       - name: lakehouse-raw
-        anonymousRead: false
-      - name: pulumi-state
         anonymousRead: false

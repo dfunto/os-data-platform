@@ -1,6 +1,6 @@
 name: noaa_ghcn
 description: "Public GHCN (Global Historical Climatology Network) data from the NOAA (National Oceanic and Atmospheric Administration)"
-source_type: "s3"
+source_type: s3
 s3_config:
   bucket: noaa-ghcn-pds
   disable_auth: true

@@ -7,6 +7,7 @@ from typing import ClassVar
 from pydantic import BaseModel, computed_field, field_validator, model_validator
 from common.models.ingestion import IngestionSourceType
 from common.models.ingestion_s3 import IngestionS3Config
+from common.models.ingestion_api import IngestionApiConfig
 
 
 class SQLTemplate(BaseModel):
@@ -36,6 +37,7 @@ class IngestionConfig(CapabilityConfig):
     source_type: IngestionSourceType
     s3_config: IngestionS3Config | None = None
     airbyte_config: dict | None = None
+    api_config: IngestionApiConfig | None = None
 
     @field_validator("name")
     @classmethod
@@ -49,6 +51,7 @@ class IngestionConfig(CapabilityConfig):
         config_map = {
             IngestionSourceType.S3: "s3_config",
             IngestionSourceType.AIRBYTE: "airbyte_config",
+            IngestionSourceType.API: "api_config",
         }
         field = config_map[self.source_type]
         if getattr(self, field) is None:

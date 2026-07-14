@@ -8,6 +8,7 @@ from pydantic import BaseModel, Discriminator, model_validator
 class IngestionSourceType(Enum):
     S3 = "s3"
     AIRBYTE = "airbyte"
+    API = "api"
 
 
 class ClickHouseFileFormat(Enum):

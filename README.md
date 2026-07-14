@@ -37,10 +37,6 @@ graph TB
             ClickHouse["ClickHouse<br/><i>warehouse</i><br/>raw DB → cleansed DB → curated DB"]
         end
 
-        subgraph Ingestion
-            Airbyte["Airbyte<br/><i>ingestor</i>"]
-        end
-
         subgraph Reporting
             Superset["Apache Superset<br/><i>reporting</i><br/>dashboards / SQL editor"]
         end
@@ -55,16 +51,15 @@ graph TB
     end
 
     S3 -- "S3 copy<br/>(Dagster asset)" --> SeaweedFS
-    API -- "Connectors" --> Airbyte
-    Airbyte -- "Raw files" --> SeaweedFS
+    API -- "dlt pipeline<br/>(Dagster asset)" --> Dagster
     Dagster -- "Copies files" --> SeaweedFS
     Dagster -- "CREATE TABLE<br/>(SQL)" --> ClickHouse
+    Dagster -- "dlt load<br/>(REST → raw)" --> ClickHouse
     SeaweedFS -- "S3 engine<br/>(reads in-place)" --> ClickHouse
     Dagster -- "dagster-dbt" --> dbt
     dbt -- "raw → cleansed<br/>(SQL)" --> ClickHouse
     Superset -- "Queries" --> ClickHouse
     Postgres -. "metadata" .-> Dagster
-    Postgres -. "metadata" .-> Airbyte
     Postgres -. "metadata" .-> Superset
 ```
 
@@ -72,8 +67,8 @@ graph TB
 
 1. **Ingestion** - Two paths based on source type:
    - **File sources (S3)**: Dagster copies files byte-for-byte from source S3 buckets into SeaweedFS `lakehouse-raw` bucket
-   - **API/SaaS/CDC sources**: Airbyte connectors handle auth, pagination, rate limiting and land data in the raw layer
-2. **Raw table creation** - Dagster creates ClickHouse tables using the S3 engine, pointing directly at raw parquet files in SeaweedFS
+   - **API sources**: Dagster runs `dlt` pipelines that fetch from REST APIs (auth, pagination) and load directly into the ClickHouse `raw` database
+2. **Raw table creation** - For file sources, Dagster creates ClickHouse tables using the S3 engine, pointing directly at raw parquet files in SeaweedFS. API sources are materialized straight into `raw` tables by `dlt`.
 3. **Transformation** - dbt models (orchestrated by Dagster via `dagster-dbt`) transform data through `raw` -> `cleansed` -> `curated` databases in ClickHouse
 
 ### Lakehouse Layers
@@ -92,9 +87,9 @@ graph TB
 | Transformation | [dbt](https://www.getdbt.com) | SQL-based data transformations (ClickHouse adapter) |
 | Warehouse | [ClickHouse](https://clickhouse.com) | Columnar OLAP database with S3 engine |
 | Object Storage | [SeaweedFS](https://github.com/seaweedfs/seaweedfs) | S3-compatible distributed storage (lakehouse) |
-| Ingestion | [Airbyte](https://airbyte.com) | Connectors for API/SaaS/CDC sources |
+| Ingestion | [dlt](https://dlthub.com) | Config-driven REST API ingestion (`api` source type), loads into ClickHouse |
 | Reporting | [Apache Superset](https://superset.apache.org) | BI dashboards, SQL editor, chart explorer |
-| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster, Airbyte, and Superset |
+| Metadata DB | [PostgreSQL](https://postgresql.org) | Shared metadata store for Dagster and Superset |
 | Deployment | [Kubernetes](https://kubernetes.io) + [Helm](https://helm.sh) | Container orchestration and declarative deployment |
 | Shared Library | Python / [Pydantic](https://docs.pydantic.dev) | Config models, validation, K8s secret loading |
 
@@ -121,6 +116,7 @@ os-data-platform/
 │   │   ├── assets/
 │   │   │   ├── ingestion.py        # Abstract builder + factory (dispatches by source_type)
 │   │   │   ├── ingestion_s3.py     # S3 ingestion: copy to lakehouse + create raw table
+│   │   │   ├── ingestion_api.py    # API ingestion: dlt REST pipelines -> ClickHouse raw
 │   │   │   └── transform.py        # dbt integration: dagster-dbt assets with custom translator
 │   │   ├── resources/
 │   │   │   ├── lakehouse.py        # SeaweedFS S3 client (extends dagster-aws S3Resource)
@@ -146,7 +142,6 @@ os-data-platform/
 │   ├── metadata/values.yaml        # PostgreSQL (bitnami)
 │   ├── storage/                    # SeaweedFS chart wrapper
 │   ├── orchestrator/values.yaml    # Dagster (official chart)
-│   ├── ingestor/values.yaml        # Airbyte v2 (community)
 │   ├── operators/                  # ClickHouse operator
 │   ├── warehouse/                  # ClickHouse cluster (custom chart)
 │   ├── reporting/values.yaml       # Apache Superset
@@ -214,23 +209,25 @@ Dagster auto-discovers these configs at startup and generates assets per table:
 
 ## Design Decisions
 
-### Ingestion Strategy: Airbyte for Connectors, Direct Copy for Files
+### Ingestion Strategy: dlt for APIs, Direct Copy for Files
 
-**Decision:** Use Airbyte for API/SaaS/CDC sources. Use direct S3 copy + ClickHouse S3 engine for file-based sources.
+**Decision:** Use `dlt` pipelines (the `api` source type) for REST API sources.
+Use direct S3 copy + ClickHouse S3 engine for file-based sources.
 
-**Context:** Airbyte deserializes all source data into JSON records (Airbyte protocol) then re-serializes to the destination format. There is no passthrough/raw-file mode. For file-based sources this means parquet files get deserialized and re-serialized, which is unnecessary overhead and can introduce schema inference noise or precision loss.
+**Context:** File-based and API sources have opposite needs.
+File sources are already accessible parquet in S3 and should be preserved as-is.
+API sources need HTTP fetching, pagination, and typing before they can be queried, and there is no source file to preserve.
 
 **Rationale:**
-- **Raw layer preservation:** The raw layer should keep source files as close to original as possible. Byte-for-byte copy achieves this; Airbyte deserialization works against it.
-- **Failure isolation:** If source S3 has short retention (e.g. 3 days), data must land in our raw bucket before any transformation. A direct copy has fewer failure points than Airbyte's deserialize-serialize pipeline.
-- **Schema validation at the right layer:** Schema checks are better done as an explicit Dagster asset (controlled, observable) rather than implicitly inside the ingestion tool.
-- **Right tool for the job:** Airbyte excels at sources that need connectors, auth, pagination, rate limiting. S3 files are already accessible -- no connector needed.
+- **Raw layer preservation:** For files, the raw layer should stay as close to original as possible, so a byte-for-byte copy is used rather than any deserialize/re-serialize step.
+- **Right tool for the job:** `dlt` handles auth, pagination, and schema inference for REST APIs with a small, config-driven footprint (no separate service to run).
+- **No unnecessary hops:** API data has no source file worth staging in SeaweedFS, so `dlt` loads it straight into the ClickHouse `raw` database.
+- **Config-driven:** Adding an API source is pure YAML (`url`, `primary_key`, request `params`); no per-source Python is required.
 
 **Consequences:**
-- Two ingestion paths to orchestrate (Dagster handles both).
-- Airbyte manages API/SaaS/CDC ingestion.
-- Direct S3 copy (via Dagster asset) copies file-based sources to raw bucket.
-- ClickHouse reads raw parquet directly via S3 table function / named collection.
+- Two ingestion paths to orchestrate, both as Dagster assets built by `IngestionAssetBuilder` and dispatched by `source_type`.
+- File sources: Dagster copies to the raw bucket, and ClickHouse reads the parquet in-place via the S3 engine / named collection.
+- API sources: Dagster runs a `dlt` pipeline that loads directly into ClickHouse `raw` (dlt is the internal load engine; the platform exposes it as the `api` source type).
 
 ### Raw Layer as Safety Net
 
@@ -264,7 +261,7 @@ Dagster auto-discovers these configs at startup and generates assets per table:
 
 **Rationale:**
 - SeaweedFS handles small-to-medium file workloads efficiently with its volume-based architecture.
-- Both Dagster and Airbyte connect via standard S3 API -- the backing store is transparent.
+- Dagster connects via the standard S3 API -- the backing store is transparent.
 - Avoids MinIO licensing concerns for production use.
 
 ### ClickHouse S3 Engine for Raw Tables

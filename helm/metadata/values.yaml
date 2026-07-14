@@ -12,8 +12,6 @@ primary:
       init.sql: |
         CREATE DATABASE dagster;
         GRANT ALL PRIVILEGES ON DATABASE dagster TO platform;
-        CREATE DATABASE airbyte;
-        GRANT ALL PRIVILEGES ON DATABASE airbyte TO platform;
         CREATE DATABASE superset;
         GRANT ALL PRIVILEGES ON DATABASE superset TO platform;
 

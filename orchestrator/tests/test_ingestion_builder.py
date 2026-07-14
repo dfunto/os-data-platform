@@ -1,4 +1,3 @@
-import pytest
 import dagster as dg
 
 from assets.ingestion import IngestionAssetBuilder
@@ -50,17 +49,6 @@ class TestGetBuilder:
         config = _ingestion_config()
         builder = IngestionAssetBuilder.get_builder(config)
         assert isinstance(builder, S3IngestionAssetBuilder)
-
-    def test_airbyte_source_raises_not_implemented(self, tmp_path):
-        from common.models.core import IngestionConfig
-        config = IngestionConfig(
-            file_path=tmp_path / "source.yml",
-            name="my_source",
-            source_type="airbyte",
-            airbyte_config={"connection_id": "abc"},
-        )
-        with pytest.raises(NotImplementedError):
-            IngestionAssetBuilder.get_builder(config)
 
 
 class TestBuildAssets:

@@ -27,8 +27,10 @@ class IngestionAssetBuilder(ABC):
         if config.source_type == IngestionSourceType.S3:
             from assets.ingestion_s3 import S3IngestionAssetBuilder
             return S3IngestionAssetBuilder(config)
-        else:
-            raise NotImplementedError(f"Source type not implemented {config.source_type}")
+        if config.source_type == IngestionSourceType.API:
+            from assets.ingestion_api import ApiIngestionAssetBuilder
+            return ApiIngestionAssetBuilder(config)
+        raise NotImplementedError(f"Source type not implemented {config.source_type}")
 
     @staticmethod
     def read_sql(relative_path: str, **params) -> str:

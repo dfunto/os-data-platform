@@ -4,7 +4,7 @@ Open source data platform built on Kubernetes with ingestion, transformation, an
 
 ## Goal
 
-Full data platform using only OSS: Kubernetes, S3, Apache Hudi, Spark, Dagster, Trino, ClickHouse, Kafka. Airbyte for ingestion (TBD).
+Full data platform using only OSS: Kubernetes, S3, Apache Hudi, Spark, Dagster, Trino, ClickHouse, Kafka. dlt for API ingestion (the `api` source type).
 
 ## Repo Structure
 
@@ -83,7 +83,7 @@ The platform defines three asset groups forming a lineage:
 - Python package in `orchestrator/`, requires Python >= 3.12
 - Deps on `common` library via `libs/` (path dependency)
 - Entry point: `src/definitions.py` — loads `UserConfig` from `./configuration`, builds ingestion + transform assets
-- Ingestion: `IngestionAssetBuilder.get_builder(config)` dispatches by `source_type` (S3, Airbyte)
+- Ingestion: `IngestionAssetBuilder.get_builder(config)` dispatches by `source_type` (S3, API)
 - S3 ingestion: reads from source S3 bucket, copies files to SeaweedFS lakehouse (`lakehouse-raw` bucket)
 - Transform: `dagster-dbt` integration via `build_transform_assets()` in `assets/transform.py`
   - Custom `CustomDagsterDbtTranslator` maps dbt nodes to `{schema}_{alias}` asset keys (e.g. `raw.table` source -> `raw_table`) to link dbt deps to ingestion assets

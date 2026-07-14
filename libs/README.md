@@ -33,9 +33,9 @@ Top-level config for one ingestion source. Dispatches to source-specific config 
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | `str` | Source identifier |
-| `source_type` | `IngestionSourceType` | `s3` or `airbyte` |
+| `source_type` | `IngestionSourceType` | `s3` or `api` |
 | `s3_config` | `IngestionS3Config` | Required when `source_type = s3` |
-| `airbyte_config` | `dict` | Reserved for Airbyte (not yet implemented) |
+| `api_config` | `IngestionApiConfig` | Required when `source_type = api` (dlt REST ingestion) |
 | `file_path` | `Path` | Auto-set from YAML file location |
 | `application` | `str` (computed) | Stem of the YAML filename |
 

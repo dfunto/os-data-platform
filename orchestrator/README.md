@@ -9,7 +9,7 @@ graph TD
     YAML["configuration/ingestion/*.yml"] --> UC["UserConfig<br/>(loads + validates YAML)"]
     UC --> Factory["IngestionAssetBuilder.get_builder(config)"]
     Factory -->|"source_type = s3"| S3Builder["S3IngestionAssetBuilder"]
-    Factory -->|"source_type = airbyte"| NotImpl["NotImplementedError<br/>(planned)"]
+    Factory -->|"source_type = api"| ApiBuilder["ApiIngestionAssetBuilder"]
     S3Builder --> Assets["Per table, two assets generated"]
     Assets --> Ingest["ingest_{source}_{table}<br/>Copy S3 files → SeaweedFS lakehouse-raw"]
     Assets --> Raw["raw_{source}_{table}<br/>CREATE TABLE in ClickHouse via S3 engine"]
