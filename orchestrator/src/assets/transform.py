@@ -68,7 +68,7 @@ def _raw_partitions(
         if not s3_config:
             continue
         for table in s3_config.tables:
-            partitions_def = IngestionAssetBuilder.build_partitions_def(table)
+            partitions_def = IngestionAssetBuilder.build_partitions_def(table.partitions)
             if partitions_def is not None:
                 partitions[f"raw_{config.name}_{table.name}"] = partitions_def
     return partitions

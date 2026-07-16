@@ -7,6 +7,7 @@ from pathlib import Path
 from common.models.ingestion import (
     IngestionSourceType,
     IngestionTableConfig,
+    PartitionDef,
     TimePartition,
     StaticPartition,
 )
@@ -52,9 +53,8 @@ class IngestionAssetBuilder(ABC):
     @classmethod
     def build_partitions_def(
         cls,
-        table: IngestionTableConfig,
+        partitions: list[PartitionDef] | None,
     ) -> dg.PartitionsDefinition | None:
-        partitions = table.partitions
         if not partitions:
             return None
 

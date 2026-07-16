@@ -42,7 +42,7 @@ class S3IngestionAssetBuilder(IngestionAssetBuilder):
 
     def _build_assets(self, table: IngestionS3TableConfig) -> list[dg.AssetsDefinition]:
         source_name = self.config.name
-        partitions_def = self.build_partitions_def(table)
+        partitions_def = self.build_partitions_def(table.partitions)
 
         @dg.asset(name=f"ingest_{source_name}_{table.name}", group_name=self.group_name, partitions_def=partitions_def)
         def ingest_s3(context: dg.AssetExecutionContext, lakehouse: LakehouseResource):

@@ -18,11 +18,11 @@ def _incremental_table(extra_partitions: list | None = None) -> IngestionS3Table
 class TestBuildPartitionsDef:
     def test_no_partitions_returns_none(self):
         table = _s3_table(full_refresh=True)
-        assert IngestionAssetBuilder.build_partitions_def(table) is None
+        assert IngestionAssetBuilder.build_partitions_def(table.partitions) is None
 
     def test_single_time_partition_is_time_window(self):
         table = _incremental_table()
-        result = IngestionAssetBuilder.build_partitions_def(table)
+        result = IngestionAssetBuilder.build_partitions_def(table.partitions)
         assert isinstance(result, dg.TimeWindowPartitionsDefinition)
         assert result.fmt == "%Y"
 
@@ -31,13 +31,13 @@ class TestBuildPartitionsDef:
             full_refresh=False,
             partitions=[STATIC_PARTITION],
         )
-        result = IngestionAssetBuilder.build_partitions_def(table)
+        result = IngestionAssetBuilder.build_partitions_def(table.partitions)
         assert isinstance(result, dg.StaticPartitionsDefinition)
         assert set(result.get_partition_keys()) == {"NA", "EU"}
 
     def test_multi_partition_wraps_both_dimensions(self):
         table = _incremental_table(extra_partitions=[STATIC_PARTITION])
-        result = IngestionAssetBuilder.build_partitions_def(table)
+        result = IngestionAssetBuilder.build_partitions_def(table.partitions)
         assert isinstance(result, dg.MultiPartitionsDefinition)
         dims = {name: type(pdef) for name, pdef in result.partitions_defs}
         assert dims["YEAR"] is dg.TimeWindowPartitionsDefinition

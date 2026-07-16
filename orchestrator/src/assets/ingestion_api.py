@@ -50,7 +50,7 @@ class ApiIngestionAssetBuilder(IngestionAssetBuilder):
 
     def _build_asset(self, table: IngestionApiTableConfig) -> dg.AssetsDefinition:
         source_name = self.config.name
-        partitions_def = self.build_partitions_def(table)
+        partitions_def = self.build_partitions_def(table.partitions)
         # All of a source's assets share one pool so concurrent runs/partitions stay within
         # the API's rate limit; the slot count is configured on the instance.
         pool = self.config.api_config.pool or source_name
