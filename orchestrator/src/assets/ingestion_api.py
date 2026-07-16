@@ -1,30 +1,31 @@
 import tempfile
 from typing import Literal
 
-import requests
 import dlt
 import dagster as dg
 from dlt.destinations.impl.clickhouse.configuration import ClickHouseCredentials
+from dlt.sources.helpers.rest_client import RESTClient
+from dlt.sources.helpers.rest_client.paginators import PageNumberPaginator
 
 from assets.ingestion import IngestionAssetBuilder
-from common.models.ingestion_api import IngestionApiTableConfig
+from common.models.ingestion_api import IngestionApiTableConfig, PageNumberPaginatorConfig
 from resources.warehouse import WarehouseResource
 
 
-def _fetch_paginated(url: str, params: dict) -> list[dict]:
-    page = 1
-    all_records = []
-    while True:
-        resp = requests.get(
-            url,
-            params={"format": "json", "per_page": 1000, "page": page, **params},
-        ).json()
-        meta, records = resp[0], resp[1] or []
-        all_records.extend(records)
-        if page >= meta["pages"]:
-            break
-        page += 1
-    return all_records
+def _paginate(table: IngestionApiTableConfig, params: dict):
+    # `pagination` and `data_selector` describe the response shape per table, e.g. World
+    # Bank returns `[meta, records]` with total pages at meta.pages and records at index 1.
+    paginator = None
+    data_selector = None
+    if isinstance(table.pagination, PageNumberPaginatorConfig):
+        cfg = table.pagination
+        paginator = PageNumberPaginator(
+            base_page=cfg.base_page, page_param=cfg.page_param, total_path=cfg.total_path
+        )
+        data_selector = cfg.data_selector
+    # table.url is absolute, so base_url is empty and paginate receives the full URL.
+    client = RESTClient(base_url="", paginator=paginator, data_selector=data_selector)
+    yield from client.paginate(table.url, params=params)
 
 
 class ApiIngestionAssetBuilder(IngestionAssetBuilder):
@@ -50,6 +51,9 @@ class ApiIngestionAssetBuilder(IngestionAssetBuilder):
     def _build_asset(self, table: IngestionApiTableConfig) -> dg.AssetsDefinition:
         source_name = self.config.name
         partitions_def = self.build_partitions_def(table)
+        # All of a source's assets share one pool so concurrent runs/partitions stay within
+        # the API's rate limit; the slot count is configured on the instance.
+        pool = self.config.api_config.pool or source_name
         write_disposition: Literal["replace", "append"] = (
             "replace" if table.full_refresh else "append"
         )
@@ -58,6 +62,7 @@ class ApiIngestionAssetBuilder(IngestionAssetBuilder):
             name=f"raw_{source_name}_{table.name}",
             group_name=self.group_name,
             partitions_def=partitions_def,
+            pool=pool,
         )
         def run_api_pipeline(context: dg.AssetExecutionContext, warehouse: WarehouseResource):
             # Request params may reference the run's partition keys via placeholders,
@@ -67,7 +72,7 @@ class ApiIngestionAssetBuilder(IngestionAssetBuilder):
 
             @dlt.resource(name=f"{source_name}_{table.name}", primary_key=table.primary_key)
             def _resource():
-                yield _fetch_paginated(table.url, params=request_params)
+                yield from _paginate(table, params=request_params)
 
             credentials = self._build_credentials(warehouse)
             # ClickHouse has no schemas; dlt emulates a dataset by prefixing table names

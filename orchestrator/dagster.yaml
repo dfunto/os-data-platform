@@ -1,6 +1,11 @@
 telemetry:
   enabled: false
 
+concurrency:
+  pools:
+    default_limit: 10
+    granularity: op
+
 storage:
   postgres:
     postgres_db:

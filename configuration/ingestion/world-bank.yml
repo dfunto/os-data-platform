@@ -1,31 +1,45 @@
 name: world_bank
 description: "Free public API providing global development indicators including GDP, population, poverty, education, and health metrics across 200+ countries from 1960 to present"
 source_type: api
+
+# Shared building blocks referenced by tables below (this key is ignored by the loader).
+anchors:
+  pagination: &page_number_pagination
+    type: page_number
+    total_path: "[0].pages"
+    data_selector: "[1]"
+  partitions: &yearly_partitions
+    - type: time
+      name: "YEAR"
+      start: "2020-01-01"  # Keep dataset small
+      cron: "0 0 1 1 *"  # one partition per year
+      format: "%Y"
+
 api_config:
   tables:
     - name: countries
       full_refresh: true
       url: https://api.worldbank.org/v2/country/all
       primary_key: id
+      pagination: *page_number_pagination
+      params:
+        format: json
+        per_page: "1000"
     - name: gdp
       url: https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD
       primary_key: [countryiso3code, date]
-      partitions:
-        - type: time
-          name: "YEAR"
-          start: "2020-01-01"  # Keep dataset small
-          cron: "0 0 1 1 *"  # one partition per year
-          format: "%Y"
+      pagination: *page_number_pagination
+      partitions: *yearly_partitions
       params:
+        format: json
+        per_page: "1000"
         date: "{YEAR}"
     - name: population
       url: https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL
       primary_key: [countryiso3code, date]
-      partitions:
-        - type: time
-          name: "YEAR"
-          start: "2020-01-01"  # Keep dataset small
-          cron: "0 0 1 1 *"  # one partition per year
-          format: "%Y"
+      pagination: *page_number_pagination
+      partitions: *yearly_partitions
       params:
+        format: json
+        per_page: "1000"
         date: "{YEAR}"
