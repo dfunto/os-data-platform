@@ -24,6 +24,9 @@ models:
     curated:
       +schema: curated
       +materialized: table
+    reporting:
+      +schema: reporting
+      +materialized: table
 
 seeds:
   transform:

@@ -201,7 +201,7 @@ Wrapper chart installing `clickhouse-operator-helm` v0.0.6. Disables cert-manage
 Custom chart deploying:
 - **ClickHouseCluster** CR - 1 shard, 1 replica, 10Gi storage, S3 named collection (`seaweedfs`) mounted via ConfigMap
 - **KeeperCluster** CR - 1 replica for coordination
-- **Init Job** - Helm post-install hook that runs `CREATE DATABASE IF NOT EXISTS raw/cleansed/curated`
+- **Init Job** - Helm post-install hook that runs `CREATE DATABASE IF NOT EXISTS raw/cleansed/curated/reporting`
 - **ConfigMap** - S3 named collection XML pointing ClickHouse at SeaweedFS endpoint
 
 ### reporting (Superset)

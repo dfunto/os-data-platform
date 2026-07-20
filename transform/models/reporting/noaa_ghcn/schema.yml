@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: noaa_ghcn_avg_yearly_observations_per_country
+    description: Per country-year average temperatures and precipitation (two-stage averaged).
+    columns:
+      - name: observation_year
+        tests:
+          - not_null
+      - name: country_id
+        tests:
+          - not_null
+
+  - name: noaa_ghcn_global_yearly_summary
+    description: One row per year - global climate summary.
+    columns:
+      - name: observation_year
+        tests:
+          - not_null
+          - unique
+
+  - name: noaa_ghcn_snow_and_cold_per_country
+    description: Per country-year snowfall and cold extremes.
+    columns:
+      - name: observation_year
+        tests:
+          - not_null
+      - name: country_id
+        tests:
+          - not_null
+
+  - name: noaa_ghcn_station_coverage_per_country
+    description: One row per country - station coverage and mean geography.
+    columns:
+      - name: country_id
+        tests:
+          - not_null
+          - unique

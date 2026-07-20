@@ -37,16 +37,21 @@ orchestrator/                           # Dagster user code
   .python-version                       # Python >= 3.12
 
 transform/                              # dbt project (transformation layer)
-  dbt_project.yml                       # dbt project config: cleansed models -> table, seeds -> raw schema
+  dbt_project.yml                       # dbt project config: cleansed/curated/reporting -> table, seeds -> raw schema
   profiles.yml                          # ClickHouse connection (env-var driven), no state backend
   macros/
-    generate_schema_name.sql            # Use schema (raw/cleansed) verbatim, no target prefix
+    generate_schema_name.sql            # Use schema (raw/cleansed/curated/reporting) verbatim, no target prefix
   models/
     sources.yml                         # raw.* external tables produced by ingestion
     cleansed/noaa_ghcn/                 # Cleansed models (table / view / incremental)
       noaa_ghcn_countries.sql           #   table (FULL)
       noaa_ghcn_observations.sql        #   incremental, insert_overwrite by observation_year
       ...
+    curated/noaa_ghcn/                  # Denormalized facts (curated_*.sql, aliased noaa_ghcn_*)
+      curated_noaa_ghcn_stations.sql    #   station dim + country/state names
+      curated_noaa_ghcn_observations.sql#   obs-grain OBT, normalized value, all rows + quality_flag
+      curated_noaa_ghcn_station_year.sql#   per-station-year rollup (two-stage first stage)
+    reporting/noaa_ghcn/                # Aggregated marts over curated (Superset reads these)
   seeds/noaa_ghcn/                      # Flag lookup CSVs -> raw schema
   pyproject.toml                        # Deps: dbt-core, dbt-clickhouse
   .python-version                       # Python >= 3.12
@@ -55,7 +60,7 @@ helm/                                   # Helm charts and values for K8s
   orchestrator/values.yaml              # Dagster Helm values
   warehouse/                            # ClickHouse warehouse chart
     Chart.yaml
-    values.yaml                         # ClickHouse config: shards, replicas, initSQL (raw/cleansed/curated DBs)
+    values.yaml                         # ClickHouse config: shards, replicas, initSQL (raw/cleansed/curated/reporting DBs)
     templates/
       clickhouse-cluster.yaml           # ClickHouseCluster CR with S3 named collection mount
       keeper-cluster.yaml               # ClickHouse Keeper cluster
@@ -67,11 +72,13 @@ helm/                                   # Helm charts and values for K8s
 
 ## Asset Pipeline
 
-The platform defines three asset groups forming a lineage:
+The platform defines asset groups forming a lineage:
 
 1. **Ingestion** (`ingest_*` assets) — copies files from source S3 buckets into SeaweedFS lakehouse
 2. **Raw** (`raw_*` assets) — creates ClickHouse tables from ingested files
-3. **Cleansed** (`cleansed_*` assets) — dbt models that transform raw tables into cleansed tables
+3. **Cleansed** (`cleansed_*` assets) — dbt models that clean/type raw tables (staging, per-source)
+4. **Curated** (`curated_*` assets) — dbt models: denormalized, non-aggregated facts; units normalized once (÷10 tenths, SNOW-exception). Source for reporting and the semantic layer
+5. **Reporting** (`reporting_*` assets) — dbt models: aggregated business marts read directly by Superset
 
 ## Orchestrator (Dagster)
 
@@ -94,11 +101,15 @@ The platform defines three asset groups forming a lineage:
 - dbt project in `transform/`, requires Python >= 3.12
 - Adapter: `dbt-clickhouse` (ClickHouse for execution + storage); dbt is stateless — partition/backfill tracking is owned by Dagster
 - Connection via `profiles.yml`, env-var driven: `CLICKHOUSE_ENDPOINT_URL`, `CLICKHOUSE_HTTP_PORT`, `CLICKHOUSE_PASSWORD`
-- `macros/generate_schema_name.sql` uses the schema (`raw`/`cleansed`) verbatim so keys line up with ingestion
+- `macros/generate_schema_name.sql` uses the schema (`raw`/`cleansed`/`curated`/`reporting`) verbatim so keys line up with ingestion
+- Layers: `cleansed` (staging) → `curated` (denormalized facts) → `reporting` (aggregated marts)
 - Models in `models/cleansed/` read from `raw.*` sources (and seeds) and write to `cleansed.*`:
   - table (countries/states/stations/inventory), view (flag lookups over seeds), incremental `insert_overwrite` partitioned by `observation_year` (observations)
+- Models in `models/curated/noaa_ghcn/` are denormalized facts (`curated_*.sql` files, aliased to `noaa_ghcn_*` since names collide with cleansed):
+  - `noaa_ghcn_stations` (station dim + country/state names), `noaa_ghcn_observations` (obs-grain OBT, `observation_value_normalized` bakes ÷10 / SNOW-exception, all rows kept with `quality_flag`), `noaa_ghcn_station_year` (per-station-year rollup = first stage of the two-stage averages)
+- Models in `models/reporting/noaa_ghcn/` are trivial aggregations over curated facts (the 4 marts Superset reads); no unit or multi-stage logic lives here
 - Seeds (`seeds/noaa_ghcn/*.csv`) load flag lookups into the `raw` schema
-- Integrated into Dagster via `dagster-dbt` — cleansed assets depend on raw ingestion assets
+- Integrated into Dagster via `dagster-dbt` — cleansed assets depend on raw ingestion assets; curated → reporting chain via dbt refs
 - Can run standalone from `transform/`: `dbt seed`, `dbt run`, `dbt build` (observations needs `--vars '{start_ds, end_ds}'`)
 
 ## Helm / K8s Deployment
@@ -129,5 +140,5 @@ kubectl port-forward svc/dagster-dagster-webserver 3000:80 -n dagster
 - Deployed via custom Helm chart in `helm/warehouse/`
 - Uses ClickHouse Operator (`clickhouse.com/v1alpha1` CRDs)
 - S3 named collection `seaweedfs` configured via ConfigMap (points to SeaweedFS S3 endpoint)
-- Init SQL creates databases: `raw`, `cleansed`, `curated`
+- Init SQL creates databases: `raw`, `cleansed`, `curated`, `reporting`
 - Keeper cluster for coordination

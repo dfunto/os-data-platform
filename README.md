@@ -57,7 +57,7 @@ graph TB
     Dagster -- "dlt load<br/>(REST → raw)" --> ClickHouse
     SeaweedFS -- "S3 engine<br/>(reads in-place)" --> ClickHouse
     Dagster -- "dagster-dbt" --> dbt
-    dbt -- "raw → cleansed<br/>(SQL)" --> ClickHouse
+    dbt -- "raw → cleansed → curated → reporting<br/>(SQL)" --> ClickHouse
     Superset -- "Queries" --> ClickHouse
     Postgres -. "metadata" .-> Dagster
     Postgres -. "metadata" .-> Superset
@@ -69,15 +69,16 @@ graph TB
    - **File sources (S3)**: Dagster copies files byte-for-byte from source S3 buckets into SeaweedFS `lakehouse-raw` bucket
    - **API sources**: Dagster runs `dlt` pipelines that fetch from REST APIs (auth, pagination) and load directly into the ClickHouse `raw` database
 2. **Raw table creation** - For file sources, Dagster creates ClickHouse tables using the S3 engine, pointing directly at raw parquet files in SeaweedFS. API sources are materialized straight into `raw` tables by `dlt`.
-3. **Transformation** - dbt models (orchestrated by Dagster via `dagster-dbt`) transform data through `raw` -> `cleansed` -> `curated` databases in ClickHouse
+3. **Transformation** - dbt models (orchestrated by Dagster via `dagster-dbt`) transform data through `raw` -> `cleansed` -> `curated` -> `reporting` databases in ClickHouse
 
 ### Lakehouse Layers
 
-| Layer | SeaweedFS Bucket | ClickHouse DB | Purpose |
-|-------|-----------------|---------------|---------|
-| Raw | `lakehouse-raw` | `raw` | Source files as-is, indefinite retention |
-| Cleansed | `lakehouse-cleansed` | `cleansed` | Validated, deduplicated, typed |
-| Curated | `lakehouse-curated` | `curated` | Business-ready, aggregated |
+| Layer | ClickHouse DB | Purpose |
+|-------|---------------|---------|
+| Raw | `raw` | Source files as-is, indefinite retention |
+| Cleansed | `cleansed` | Validated, deduplicated, typed (staging, per-source) |
+| Curated | `curated` | Denormalized, non-aggregated facts; units normalized once. Source for reporting and the semantic layer |
+| Reporting | `reporting` | Aggregated business marts; consumed directly by Superset dashboards |
 
 ## Tech Stack
 

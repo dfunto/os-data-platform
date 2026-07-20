@@ -51,6 +51,7 @@ clickhouse:
     CREATE DATABASE IF NOT EXISTS raw;
     CREATE DATABASE IF NOT EXISTS cleansed;
     CREATE DATABASE IF NOT EXISTS curated;
+    CREATE DATABASE IF NOT EXISTS reporting;
 ```
 
 ## Prerequisites

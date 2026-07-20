@@ -6,7 +6,7 @@ default_endpoint: null
 offset: 0
 cache_timeout: null
 catalog: null
-schema: curated
+schema: reporting
 sql: null
 params: null
 template_params: null

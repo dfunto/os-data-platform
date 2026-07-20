@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: curated_noaa_ghcn_stations
+    description: Denormalized station dimension (station + country/state names + geography).
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+
+  - name: curated_noaa_ghcn_observations
+    description: >
+      Observation-grain one-big-table. All rows kept with quality_flag; units
+      normalized once in observation_value_normalized.
+    columns:
+      - name: station_id
+        tests:
+          - not_null
+      - name: measure
+        tests:
+          - not_null
+
+  - name: curated_noaa_ghcn_station_year
+    description: >
+      Station-year rollup fact; single home for the per-station first stage of
+      the two-stage averages.
+    columns:
+      - name: station_id
+        tests:
+          - not_null
