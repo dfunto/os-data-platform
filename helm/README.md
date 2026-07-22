@@ -12,6 +12,7 @@ Full Kubernetes deployment runbook for the data platform. All services deploy in
 | `operators` | Custom (wraps `clickhouse-operator-helm`) | ClickHouse Kubernetes operator CRDs | `operators/values.yaml` |
 | `warehouse` | Custom | ClickHouse cluster + Keeper + init jobs | `warehouse/values.yaml` |
 | `reporting` | `superset/superset` | BI dashboards (Apache Superset) | `reporting/values.yaml` |
+| `semantic` | Custom (Cube Core) | Governed semantic layer over `curated` for the English-to-SQL agent | `semantic/values.yaml` |
 
 ## Architecture on K8s
 
@@ -131,30 +132,44 @@ kubectl label secret orchestrator-postgresql-secret \
 kubectl create secret generic reporting-superset-secret \
     --from-literal=SUPERSET_SECRET_KEY=$(openssl rand -base64 42) \
     --from-literal=SUPERSET_DATABASE_URI=postgresql+psycopg2://platform:$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD@metadata-postgresql:5432/superset
+
+# Semantic layer (Cube). CUBEJS_DB_PASS is empty (default ClickHouse user).
+kubectl create secret generic semantic-cube-secret \
+    --from-literal=CUBEJS_API_SECRET=$(openssl rand -base64 42) \
+    --from-literal=CUBEJS_SQL_USER=cube \
+    --from-literal=CUBEJS_SQL_PASSWORD=$OS_DATA_PLATFORM_SEMANTIC_SQL_PASSWORD \
+    --from-literal=CUBEJS_DB_PASS=
 ```
 
 ## 4. Deploy Services
 
 Order matters -- each service depends on the ones above it.
 
+`--history-max 2` caps stored Helm revision history (one secret per revision) at 2. Pass it on every `install`/`upgrade` to stop old release secrets piling up.
+
 ```shell
 # 1. Metadata database
-helm install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data-platform
+helm install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data-platform --history-max 2
 
 # 2. Object storage
 helm dependency update helm/storage
-helm install storage ./helm/storage -n os-data-platform
+helm install storage ./helm/storage -n os-data-platform --history-max 2
 
 # 3. Warehouse
-helm install operators ./helm/operators -n os-data-platform
+helm install operators ./helm/operators -n os-data-platform --history-max 2
 helm dependency update helm/warehouse
-helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform
+helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform --history-max 2
 
 # 4. Orchestrator (optional)
-helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform
+helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform --history-max 2
 
 # 5. Reporting (optional)
-helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform
+helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform --history-max 2
+
+# 6. Semantic layer / Cube (optional) - build & push the model image, then deploy
+docker build -t dadutra2/os-data-platform-semantic:latest ./semantic
+docker push dadutra2/os-data-platform-semantic:latest
+helm install semantic ./helm/semantic -f helm/semantic/values.yaml -n os-data-platform --history-max 2
 ```
 
 ## 5. Access UIs
@@ -207,6 +222,10 @@ Custom chart deploying:
 ### reporting (Superset)
 
 Uses official `superset/superset` chart. Disables bundled PostgreSQL (uses shared metadata DB). Bundles Redis for Celery broker/caching. Installs `clickhouse-connect` and `psycopg2-binary` via bootstrap script into `/tmp/extra-packages`. DB URI and secret key injected from `reporting-superset-secret`. Default admin: `admin` / `admin`.
+
+### semantic (Cube)
+
+Custom chart running Cube Core (api-only) as the governed semantic layer over the `curated` schema. Image `dadutra2/os-data-platform-semantic:latest` bakes the data model (`semantic/model`) onto `cubejs/cube`. Connects to `warehouse-clickhouse-headless:8123` (read-only, `curated`). Exposes the REST API (`:4000`) and the Postgres-wire SQL API (`:15432`) that agents query. Secrets (`CUBEJS_API_SECRET`, SQL user/pass) come from `semantic-cube-secret`. No Cube Store / pre-aggregations in this MVP. See `semantic/README.md`.
 
 ## Downloading Charts Locally (Optional)
 

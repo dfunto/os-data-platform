@@ -4,7 +4,7 @@ Open source data platform built on Kubernetes with ingestion, transformation, an
 
 ## Goal
 
-Full data platform using only OSS: Kubernetes, S3, Apache Hudi, Spark, Dagster, Trino, ClickHouse, Kafka. dlt for API ingestion (the `api` source type).
+Full data platform using only OSS: Kubernetes, S3, Apache Hudi, Spark, Dagster, Trino, ClickHouse, Kafka. dlt for API ingestion (the `api` source type). Cube Core as the governed semantic layer over `curated` for an English-to-SQL agent.
 
 ## Repo Structure
 
@@ -56,6 +56,13 @@ transform/                              # dbt project (transformation layer)
   pyproject.toml                        # Deps: dbt-core, dbt-clickhouse
   .python-version                       # Python >= 3.12
 
+semantic/                               # Cube Core semantic layer (governed query layer over curated)
+  cube.js                               # Cube config (env-driven)
+  model/cubes/                          # Data model: station_year, stations, observations cubes
+  Dockerfile                            # FROM cubejs/cube + baked model
+  docker-compose.yml                    # Local dev (needs `make forward`)
+  .env.example                          # CLICKHOUSE_* + CUBEJS_* env
+
 helm/                                   # Helm charts and values for K8s
   orchestrator/values.yaml              # Dagster Helm values
   warehouse/                            # ClickHouse warehouse chart
@@ -67,6 +74,7 @@ helm/                                   # Helm charts and values for K8s
       lakehouse-config.yaml             # ConfigMap: S3 named collection XML (seaweedfs -> SeaweedFS endpoint)
       warehouse-init-job.yaml           # Helm hook Job: runs initSQL via clickhouse-client
       _helpers.tpl
+  semantic/                             # Cube Core chart (Deployment + Service, api-only)
   README.md
 ```
 
@@ -111,6 +119,15 @@ The platform defines asset groups forming a lineage:
 - Seeds (`seeds/noaa_ghcn/*.csv`) load flag lookups into the `raw` schema
 - Integrated into Dagster via `dagster-dbt` — cleansed assets depend on raw ingestion assets; curated → reporting chain via dbt refs
 - Can run standalone from `transform/`: `dbt seed`, `dbt run`, `dbt build` (observations needs `--vars '{start_ds, end_ds}'`)
+
+## Semantic Layer (Cube)
+
+- Cube Core in `semantic/`, the governed query layer over the `curated` schema for the English-to-SQL agent (agent selects governed measures/dimensions; Cube compiles to ClickHouse SQL and fails closed on anything unmodelled)
+- Data model in `semantic/model/cubes/` (single source of truth): `station_year` (governed climate metrics = cross-station second stage of the two-stage averages), `stations` (coverage/geo), `observations` (obs-grain detail, normalized value)
+- Reads `curated.*` read-only; **never writes** to ClickHouse (dbt is the only writer). MVP is api-only (no Cube Store / pre-aggregations)
+- Access via the SQL API (Postgres wire, port 15432) and REST (4000); connection/env in `semantic/.env.example`
+- Deployed as a custom image (`dadutra2/os-data-platform-semantic:latest`, `FROM cubejs/cube` + baked model) via `helm/semantic`; local dev via `semantic/docker-compose.yml` (needs `make forward`)
+- Design: `docs/superpowers/specs/2026-07-20-semantic-layer-cube-design.md`
 
 ## Helm / K8s Deployment
 

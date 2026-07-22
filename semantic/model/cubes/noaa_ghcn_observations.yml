@@ -1,0 +1,60 @@
+cubes:
+  - name: noaa_ghcn_observations
+    sql_table: curated.noaa_ghcn_observations
+    data_source: default
+
+    joins: []
+
+    dimensions:
+      - name: country_id
+        sql: country_id
+        type: string
+
+      - name: country_name
+        sql: country_name
+        type: string
+
+      - name: measure
+        sql: measure
+        type: string
+
+      - name: measurement_flag
+        sql: measurement_flag
+        type: string
+
+      - name: quality_flag
+        sql: quality_flag
+        type: string
+
+      - name: source_flag
+        sql: source_flag
+        type: string
+
+      - name: state_id
+        sql: state_id
+        type: string
+
+      - name: station_id
+        sql: station_id
+        type: string
+
+      - name: observation_date
+        sql: observation_date
+        type: time
+
+      - name: observed_at
+        sql: observed_at
+        type: time
+
+    measures:
+      - name: count
+        type: count
+
+      - name: observation_value
+        sql: observation_value
+        type: sum
+
+    pre_aggregations:
+      # Pre-aggregation definitions go here.
+      # Learn more in the documentation: https://cube.dev/docs/caching/pre-aggregations/getting-started
+

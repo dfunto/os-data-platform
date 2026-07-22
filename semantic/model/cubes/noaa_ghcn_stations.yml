@@ -1,0 +1,53 @@
+cubes:
+  - name: noaa_ghcn_stations
+    sql_table: curated.noaa_ghcn_stations
+    data_source: default
+
+    joins: []
+
+    dimensions:
+      - name: id
+        sql: id
+        type: string
+        primary_key: true
+
+      - name: country_id
+        sql: country_id
+        type: string
+
+      - name: country_name
+        sql: country_name
+        type: string
+
+      - name: gsn_flag
+        sql: gsn_flag
+        type: string
+
+      - name: hcn_crn_flag
+        sql: hcn_crn_flag
+        type: string
+
+      - name: name
+        sql: name
+        type: string
+
+      - name: state_id
+        sql: state_id
+        type: string
+
+      - name: state_name
+        sql: state_name
+        type: string
+
+      - name: wmo_id
+        sql: wmo_id
+        type: string
+
+    measures:
+      - name: count
+        type: count
+
+    pre_aggregations:
+      # Pre-aggregation definitions go here.
+      # Learn more in the documentation: https://cube.dev/docs/caching/pre-aggregations/getting-started
+

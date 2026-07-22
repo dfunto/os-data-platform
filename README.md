@@ -86,6 +86,7 @@ graph TB
 |-----------|------|---------|
 | Orchestration | [Dagster](https://dagster.io) | Pipeline scheduling, asset management, observability |
 | Transformation | [dbt](https://www.getdbt.com) | SQL-based data transformations (ClickHouse adapter) |
+| Semantic Layer | [Cube](https://cube.dev) | Governed metrics/dimensions over `curated`; SQL API for the English-to-SQL agent |
 | Warehouse | [ClickHouse](https://clickhouse.com) | Columnar OLAP database with S3 engine |
 | Object Storage | [SeaweedFS](https://github.com/seaweedfs/seaweedfs) | S3-compatible distributed storage (lakehouse) |
 | Ingestion | [dlt](https://dlthub.com) | Config-driven REST API ingestion (`api` source type), loads into ClickHouse |

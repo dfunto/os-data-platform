@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-cube
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "semantic.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "semantic.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "semantic.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: cube
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: rest
+              containerPort: {{ .Values.api.restPort }}
+            - name: sql
+              containerPort: {{ .Values.api.sqlPort }}
+          env:
+            - name: CUBEJS_DEV_MODE
+              value: "false"
+            - name: CUBEJS_DB_TYPE
+              value: clickhouse
+            - name: CUBEJS_DB_HOST
+              value: {{ .Values.clickhouse.host | quote }}
+            - name: CUBEJS_DB_PORT
+              value: {{ .Values.clickhouse.httpPort | quote }}
+            - name: CUBEJS_DB_NAME
+              value: {{ .Values.clickhouse.database | quote }}
+            - name: CUBEJS_DB_USER
+              value: {{ .Values.clickhouse.user | quote }}
+            - name: CUBEJS_DB_CLICKHOUSE_READONLY
+              value: {{ .Values.clickhouse.readonly | quote }}
+            - name: CUBEJS_PG_SQL_PORT
+              value: {{ .Values.api.sqlPort | quote }}
+          # CUBEJS_API_SECRET, CUBEJS_SQL_USER, CUBEJS_SQL_PASSWORD and (optional)
+          # CUBEJS_DB_PASS are supplied by the secret.
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretName }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: rest
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: rest
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

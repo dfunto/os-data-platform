@@ -1,0 +1,29 @@
+image:
+  repository: dadutra2/os-data-platform-semantic
+  tag: latest
+  pullPolicy: Always
+
+replicas: 1
+
+# Secret holding CUBEJS_API_SECRET, CUBEJS_SQL_USER, CUBEJS_SQL_PASSWORD and
+# (optionally) CUBEJS_DB_PASS. Created out-of-band; see helm/README.md.
+secretName: semantic-cube-secret
+
+clickhouse:
+  host: warehouse-clickhouse-headless
+  httpPort: 8123
+  database: curated
+  user: default
+  readonly: true
+
+api:
+  restPort: 4000
+  sqlPort: 15432
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi

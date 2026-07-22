@@ -1,0 +1,6 @@
+apiVersion: v2
+name: semantic
+description: Cube Core semantic layer over the curated ClickHouse schema
+type: application
+version: 0.1.0
+appVersion: "1.0"
