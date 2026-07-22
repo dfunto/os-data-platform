@@ -7,12 +7,7 @@ An open-source data platform built entirely on Kubernetes using free and open-so
 
 ## Roadmap
 
-- Ingest API data
-- Ingest CDC data
-- Ingest realtime data
-- Realtime data transformation
-- Realtime dashboard
-- Machine learning capability
+See [ROADMAP.md](ROADMAP.md) for the platform direction and the AI-agent interface plan.
 
 
 ## Architecture
