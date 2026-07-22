@@ -10,7 +10,7 @@ Instead it exposes **governed interfaces that existing agents (Claude Desktop, C
 Each interface constrains what an agent can do so that correctness and safety are guaranteed by the platform, not by the LLM.
 
 The standard for "existing agents plug in" is the **Model Context Protocol (MCP)**.
-Each platform layer gets its own MCP server that exposes a small set of tools bounded to that layer's existing capabilities.
+A single MCP server exposes a set of tools, one group per capability, each tool bounded to an existing platform mechanism.
 
 ## Target capabilities
 
@@ -29,25 +29,28 @@ Each is its own spec, plan, and build cycle.
 These decisions apply across all four capabilities.
 
 **Interface is MCP, not a bespoke agent or chat.**
-The platform ships MCP servers.
+The platform ships a single MCP server.
 The agent is bring-your-own.
-The MCP server enforces the contract of its layer.
+The server enforces the contract of each capability through its tools.
 
 **Trust and apply model: start human-in-the-loop, evolve to auto-apply.**
 For the mutating capabilities (1 to 3), the agent proposes an artifact, the platform validates it, a human reviews and merges, and existing CI and Dagster deploy it.
 Validation and apply are kept as separate steps so that moving to auto-apply later only swaps the apply step, not the validation.
 The read-only capability (4) needs no apply step.
 
-**One MCP server per layer, same pattern, different artifact.**
-The validate-then-apply loop is identical across capabilities; only the artifact and its validator differ.
-The shared foundation is extracted from the first working server rather than designed up front.
+**One server now, split later only if required.**
+All capabilities start as tools on one server.
+The validate-then-apply loop is identical across capabilities; only the artifact and its validator differ, so they share one process.
+The one split worth considering later is by security posture: capability 4 only reads data, while capabilities 1 to 3 write config and touch git.
+If that difference in trust level or permissions demands isolation, the server splits into a read-only query server and a write and authoring server.
+It is not split per capability, and it is not pre-split.
 
 **Language and runtime: Python 3.12 with FastMCP.**
 This reuses the `orchestrator/` toolchain and can later share the in-tree `common` config models.
 Servers talk to their backing service (Cube, dbt, ClickHouse) over HTTP or the local filesystem.
 
 **Deployment: same shape as the `semantic/` layer.**
-Each MCP server is its own top-level directory with a `Dockerfile`, a `docker-compose.yml` for local development, and a chart under `helm/`.
+The MCP server is a top-level directory `mcp/` with a `Dockerfile`, a `docker-compose.yml` for local development, and a chart under `helm/mcp/`.
 Transport is Streamable HTTP so the server runs always-on as a service.
 Development runs via docker-compose; integration tests deploy to Kubernetes via Helm against the live platform.
 
@@ -57,9 +60,9 @@ Capability 4 is the pilot and is built first.
 It is read-only, so it carries no mutation or apply risk.
 The `curated` schema and the `semantic/` Cube model already exist, so it delivers visible value immediately.
 It is the clearest expression of the correctness story, since Cube fails closed.
-Building it first lets the shared MCP foundation be extracted from a real, working server before it is pointed at mutations.
+Building it first lets the server and its foundation be proven on a real, working tool before more tools are added.
 
-Capabilities 1 to 3 (the authoring agents) follow, reusing the pilot's foundation and adding the validate-then-apply harness.
+Capabilities 1 to 3 (the authoring tools) follow as additional tools on the same server, adding the validate-then-apply harness.
 
 ## Pilot: semantic-layer MCP server (capability 4)
 
@@ -73,9 +76,10 @@ Scope is natural-language question and answer only.
 There is no dashboard persistence and no layout, which are deferred to a later spec.
 
 **Component.**
-A new top-level directory `semantic-mcp/` mirroring the shape of `semantic/`.
+A new top-level directory `mcp/` mirroring the shape of `semantic/`.
+This is the platform's single MCP server; the pilot ships it with only the capability-4 tools, and later capabilities are added as more tools here.
 Python 3.12 plus FastMCP, Streamable HTTP transport.
-It is a thin, stateless proxy that holds no data and forwards to the Cube REST API.
+For the query tools it is a thin, stateless proxy that holds no data and forwards to the Cube REST API.
 It signs a short-lived JWT with `CUBEJS_API_SECRET` and calls Cube on port 4000.
 
 **Tools exposed.**
@@ -102,16 +106,16 @@ BYO agent -> MCP describe_schema      # sees governed vocabulary
 **Repository and deployment.**
 
 ```
-semantic-mcp/
+mcp/
   src/                 FastMCP server, Cube client, JWT signer, query models
   tests/               unit (schema, query, JWT) + integration (live Cube)
   Dockerfile           python:3.12-slim + FastMCP
   docker-compose.yml   dev; depends on the semantic cube; host-gateway to ClickHouse
   pyproject.toml
-helm/semantic-mcp/     Deployment + Service (HTTP), env from the Cube secret
+helm/mcp/              Deployment + Service (HTTP), env from the Cube secret
 ```
 
-Image: `dadutra2/os-data-platform-semantic-mcp:latest`.
+Image: `dadutra2/os-data-platform-mcp:latest`.
 Development runs via docker-compose alongside `semantic/`.
 Integration testing deploys via Helm to the `os-data-platform` namespace against live Cube and ClickHouse.
 
