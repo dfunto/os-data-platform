@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mcp
+description: Governed MCP server over the semantic (Cube) layer
+type: application
+version: 0.1.0
+appVersion: "1.0"

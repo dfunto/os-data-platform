@@ -1,0 +1,26 @@
+[project]
+name = "mcp-server"
+version = "0.1.0"
+description = "Governed MCP server over the semantic (Cube) layer"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.2.0",
+    "httpx>=0.27",
+    "pyjwt>=2.8",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "respx>=0.21", "anyio"]
+
+[project.scripts]
+mcp-server = "mcp_server.server:main"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+markers = ["integration: hits a live Cube instance"]
+filterwarnings = ["ignore::Warning"]
+addopts = "-m 'not integration'"

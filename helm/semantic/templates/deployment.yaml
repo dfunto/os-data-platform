@@ -27,6 +27,10 @@ spec:
           env:
             - name: CUBEJS_DEV_MODE
               value: "false"
+            # No Cube Store in the MVP: use the in-memory cache/queue driver so
+            # readiness/liveness probes don't require CUBEJS_CUBESTORE_HOST.
+            - name: CUBEJS_CACHE_AND_QUEUE_DRIVER
+              value: memory
             - name: CUBEJS_DB_TYPE
               value: clickhouse
             - name: CUBEJS_DB_HOST

@@ -1,0 +1,20 @@
+# Local dev for the MCP server over HTTP (Streamable HTTP transport).
+# Prerequisites (repo root): `make forward` (ClickHouse) + `make cube` (Cube on
+# :4000). The server reaches host-published Cube through the host-gateway alias.
+#
+# For use with a local stdio agent (e.g. Claude Code) you do NOT need this
+# compose file; register the server directly - see README.
+services:
+  mcp:
+    build: .
+    container_name: os-data-platform-mcp
+    ports:
+      - "8000:8000"
+    environment:
+      - CUBE_URL=http://cube-host:4000
+      - MCP_TRANSPORT=streamable-http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8000
+      - CUBEJS_API_SECRET=$OS_DATA_PLATFORM_SEMANTIC_CUBEJS_API_SECRET
+    extra_hosts:
+      - "cube-host:host-gateway"

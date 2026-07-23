@@ -1,0 +1,26 @@
+image:
+  repository: dadutra2/os-data-platform-mcp
+  tag: latest
+  pullPolicy: Always
+
+replicas: 1
+
+# Cube REST endpoint the server queries. Points at the semantic chart's Service
+# (release-name `-cube`) in the same namespace.
+cube:
+  url: http://semantic-cube:4000
+
+# Secret providing CUBEJS_API_SECRET (must match the Cube instance). Reuse the
+# semantic layer's secret. Created out-of-band; see helm/README.md.
+secretName: semantic-cube-secret
+
+service:
+  port: 8000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

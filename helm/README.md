@@ -130,13 +130,13 @@ kubectl label secret orchestrator-postgresql-secret \
 
 # Reporting (Superset)
 kubectl create secret generic reporting-superset-secret \
-    --from-literal=SUPERSET_SECRET_KEY=$(openssl rand -base64 42) \
+    --from-literal=SUPERSET_SECRET_KEY=$OS_DATA_PLATFORM_REPORTING_SUPERSET_SECRET_KEY \
     --from-literal=SUPERSET_DATABASE_URI=postgresql+psycopg2://platform:$OS_DATA_PLATFORM_METADATA_DB_PLATFORM_PASSWORD@metadata-postgresql:5432/superset
 
 # Semantic layer (Cube). CUBEJS_DB_PASS is empty (default ClickHouse user).
 kubectl create secret generic semantic-cube-secret \
-    --from-literal=CUBEJS_API_SECRET=$(openssl rand -base64 42) \
-    --from-literal=CUBEJS_SQL_USER=cube \
+    --from-literal=CUBEJS_API_SECRET=$OS_DATA_PLATFORM_SEMANTIC_CUBEJS_API_SECRET \
+    --from-literal=CUBEJS_SQL_USER=platform \
     --from-literal=CUBEJS_SQL_PASSWORD=$OS_DATA_PLATFORM_SEMANTIC_SQL_PASSWORD \
     --from-literal=CUBEJS_DB_PASS=
 ```
@@ -149,27 +149,27 @@ Order matters -- each service depends on the ones above it.
 
 ```shell
 # 1. Metadata database
-helm install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data-platform --history-max 2
+helm upgrade --install metadata bitnami/postgresql -f helm/metadata/values.yaml -n os-data-platform --history-max 2
 
 # 2. Object storage
 helm dependency update helm/storage
-helm install storage ./helm/storage -n os-data-platform --history-max 2
+helm upgrade --install storage ./helm/storage -n os-data-platform --history-max 2
 
 # 3. Warehouse
-helm install operators ./helm/operators -n os-data-platform --history-max 2
+helm upgrade --install operators ./helm/operators -n os-data-platform --history-max 2
 helm dependency update helm/warehouse
-helm install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform --history-max 2
+helm upgrade --install warehouse ./helm/warehouse -f helm/warehouse/values.yaml -n os-data-platform --history-max 2
 
 # 4. Orchestrator (optional)
-helm install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform --history-max 2
+helm upgrade --install orchestrator dagster/dagster --version 1.13.5 -f helm/orchestrator/values.yaml -n os-data-platform --history-max 2
 
 # 5. Reporting (optional)
-helm install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform --history-max 2
+helm upgrade --install reporting superset/superset -f helm/reporting/values.yaml -n os-data-platform --history-max 2
 
 # 6. Semantic layer / Cube (optional) - build & push the model image, then deploy
 docker build -t dadutra2/os-data-platform-semantic:latest ./semantic
 docker push dadutra2/os-data-platform-semantic:latest
-helm install semantic ./helm/semantic -f helm/semantic/values.yaml -n os-data-platform --history-max 2
+helm upgrade --install semantic ./helm/semantic -f helm/semantic/values.yaml -n os-data-platform --history-max 2
 ```
 
 ## 5. Access UIs
