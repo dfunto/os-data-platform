@@ -3,7 +3,7 @@ import jwt as pyjwt
 import pytest
 import respx
 
-from mcp_server.cube import CubeClient, CubeError
+from app.tools.semantic.client import CubeClient, CubeError
 
 BASE = "http://cube.test:4000"
 SECRET = "dev-secret"

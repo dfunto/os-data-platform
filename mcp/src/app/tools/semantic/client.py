@@ -8,7 +8,7 @@ the shared API secret.
 
 import httpx
 
-from mcp_server.auth import sign_cube_token
+from app.tools.semantic.auth import sign_cube_token
 
 API_PREFIX = "/cubejs-api/v1"
 

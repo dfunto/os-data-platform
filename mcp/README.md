@@ -20,7 +20,7 @@ Every tool validates the request against the live Cube model and fails closed on
 ## Layout
 
 ```
-src/mcp_server/
+src/app/
   config.py    env config (CUBE_URL, CUBEJS_API_SECRET)
   auth.py      signs short-lived Cube JWTs
   cube.py      CubeClient: /meta, /load, /sql

@@ -1,6 +1,6 @@
 import pytest
 
-from mcp_server.schema import Schema, ValidationError, parse_meta, validate_query
+from app.tools.semantic.schema import Schema, ValidationError, parse_meta, validate_query
 
 SAMPLE_META = {
     "cubes": [

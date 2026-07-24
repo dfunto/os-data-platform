@@ -2,7 +2,7 @@ import time
 
 import jwt as pyjwt
 
-from mcp_server.auth import sign_cube_token
+from app.tools.semantic.auth import sign_cube_token
 
 
 def test_sign_cube_token_is_verifiable_with_the_secret():

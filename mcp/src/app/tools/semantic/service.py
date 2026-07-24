@@ -11,7 +11,7 @@ The functions take any object exposing ``meta``/``load``/``sql`` (the
 
 from typing import Protocol
 
-from mcp_server.schema import parse_meta, validate_query
+from app.tools.semantic.schema import parse_meta, validate_query
 
 
 class Cube(Protocol):

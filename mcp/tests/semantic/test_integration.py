@@ -10,9 +10,9 @@ import os
 
 import pytest
 
-from mcp_server.cube import CubeClient
-from mcp_server.schema import ValidationError
-from mcp_server.service import describe_schema, run_query
+from app.tools.semantic.client import CubeClient
+from app.tools.semantic.schema import ValidationError
+from app.tools.semantic.service import describe_schema, run_query
 
 pytestmark = pytest.mark.integration
 

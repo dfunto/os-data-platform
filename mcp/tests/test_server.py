@@ -2,9 +2,10 @@ import anyio
 
 
 def test_server_registers_the_governed_tools():
-    from mcp_server.server import build_server
+    from app.config import Config
+    from app.server import build_server
 
-    server = build_server()
+    server = build_server(Config.from_env())
     tools = anyio.run(server.list_tools)
     names = {t.name for t in tools}
 

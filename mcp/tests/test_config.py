@@ -1,4 +1,4 @@
-from mcp_server.config import Config
+from app.config import Config
 
 
 def test_config_reads_cube_url_and_secret_from_env(monkeypatch):

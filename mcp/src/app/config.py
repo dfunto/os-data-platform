@@ -12,10 +12,16 @@ from dataclasses import dataclass
 class Config:
     cube_url: str
     api_secret: str
+    host: str
+    port: int
+    transport: str
 
     @classmethod
     def from_env(cls) -> "Config":
         return cls(
             cube_url=os.environ.get("CUBE_URL", "http://localhost:4000"),
             api_secret=os.environ.get("CUBEJS_API_SECRET", "dev-secret"),
+            host=os.environ.get("MCP_HOST", "0.0.0.0"),
+            port=int(os.environ.get("MCP_PORT", "8000")),
+            transport=os.environ.get("MCP_TRANSPORT", "stdio"),
         )

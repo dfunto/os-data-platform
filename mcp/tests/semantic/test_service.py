@@ -1,7 +1,7 @@
 import pytest
 
-from mcp_server.schema import ValidationError
-from mcp_server.service import describe_schema, preview_sql, run_query
+from app.tools.semantic.schema import ValidationError
+from app.tools.semantic.service import describe_schema, preview_sql, run_query
 
 META = {
     "cubes": [
